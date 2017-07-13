@@ -1,0 +1,21 @@
+{
+    "name": "contao/package-indexer",
+    "license": "MIT",
+    "type": "project",
+    "description": "Composer package indexer",
+    "authors": [
+
+    ],
+    "autoload": {
+        "psr-4": {
+            "Contao\\PackageIndexer\\": "src/"
+        }
+    },
+    "require": {
+        "php": "^7.1",
+        "symfony/console": "^3.3",
+        "algolia/algoliasearch-client-php": "^1.18",
+        "guzzlehttp/guzzle": "^6.3",
+        "symfony/dotenv": "^3.3"
+    }
+}
