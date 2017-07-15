@@ -19,8 +19,10 @@ use Kevinrob\GuzzleCache\Storage\Psr6CacheStorage;
 use Kevinrob\GuzzleCache\Strategy\PublicCacheStrategy;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
 
 class IndexCommand extends Command
@@ -58,26 +60,56 @@ class IndexCommand extends Command
             $this->getPackageNames('contao-module')
         ));
 
-        $this->indexPackages($packages);
-        $this->indexRequirements($this->getPackageNames('metapackage'), $packages);
+        $io = new SymfonyStyle($input, $output);
+        $io->newLine();
+
+        $this->indexPackages($io, $packages);
+        $this->indexMetapackages($io, $packages);
+
+        $io->newLine();
     }
 
-    private function indexPackages(array $names): void
+    private function indexPackages(SymfonyStyle $io, array $names): void
     {
+        $io->writeln('Indexing Contao packages: ');
+        $progressBar = $io->createProgressBar(count($names));
+        $progressBar->start();
+
         foreach (array_chunk($names, 100) as $chunk) {
             $objects = [];
 
             foreach ($chunk as $name) {
                 $objects[] = $this->extractSearchData($this->getPackage($name));
+                $progressBar->advance();
             }
 
             $this->index($objects);
             unset($objects);
         }
+
+        $progressBar->finish();
+        $io->newLine();
     }
 
-    private function indexRequirements(array $names, array $required): void
+    private function indexMetapackages(SymfonyStyle $io, array $packages)
     {
+        $names = $this->getPackageNames('metapackage');
+
+        $io->writeln('Indexing metapackages: ');
+        $progressBar = $io->createProgressBar(count($names));
+
+        $this->indexRequirements($progressBar, $names, $packages);
+
+        $progressBar->finish();
+        $io->newLine();
+    }
+
+    private function indexRequirements(ProgressBar $progressBar, array $names, array $required): void
+    {
+        $max = $progressBar->getMaxSteps();
+        $progressBar->start($max + count($names));
+        $progressBar->setProgress($max);
+
         $objects = [];
         $children = [];
 
@@ -97,12 +129,14 @@ class IndexCommand extends Command
             ) {
                 $children[] = $name;
             }
+
+            $progressBar->advance();
         }
 
         $this->index($objects);
 
         if (0 !== count($children)) {
-            $this->indexRequirements($children, $required);
+            $this->indexRequirements($progressBar, $children, $required);
         }
     }
 
