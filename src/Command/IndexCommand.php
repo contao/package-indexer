@@ -181,17 +181,26 @@ class IndexCommand extends Command
 
     private function extractSearchData(array $package): array
     {
-        $version = end($package['versions']);
+        $supported = false;
+        $latest = end($package['versions']);
+
+        foreach ($package['versions'] as $version) {
+            if (isset($version['require']['contao/core-bundle'])) {
+                $supported = true;
+                break;
+            }
+        }
 
         $data = [
             'name' => $package['name'],
-            'description' => $version['description'],
-            'keywords' => $version['keywords'],
-            'homepage' => $version['homepage'] ?? ($package['repository'] ?? ''),
-            'license' => $version['license'] ?? '',
+            'description' => $latest['description'],
+            'keywords' => $latest['keywords'],
+            'homepage' => $latest['homepage'] ?? ($package['repository'] ?? ''),
+            'license' => $latest['license'] ?? '',
             'downloads' => $package['downloads']['total'] ?? 0,
             'stars' => $package['favers'] ?? 0,
-            'managed' => $version['type'] !== 'contao-bundle' || isset($version['extra']['contao-manager-plugin']),
+            'supported' => $supported,
+            'managed' => $latest['type'] !== 'contao-bundle' || isset($latest['extra']['contao-manager-plugin']),
             'abandoned' => isset($package['abandoned']),
             'replacement' => $package['abandoned'] ?? '',
         ];
