@@ -38,6 +38,11 @@ class IndexCommand extends Command
     private $index;
 
     /**
+     * @var SymfonyStyle
+     */
+    private $io;
+
+    /**
      * {@inheritdoc}
      */
     protected function configure()
@@ -60,26 +65,29 @@ class IndexCommand extends Command
             $this->getPackageNames('contao-module')
         ));
 
-        $io = new SymfonyStyle($input, $output);
-        $io->newLine();
+        $this->io = new SymfonyStyle($input, $output);
+        $this->io->newLine();
 
-        $this->indexPackages($io, $packages);
-        $this->indexMetapackages($io, $packages);
-
-        $io->newLine();
+        $this->indexPackages($packages);
+        $this->indexMetapackages($packages);
     }
 
-    private function indexPackages(SymfonyStyle $io, array $names): void
+    private function indexPackages(array $names): void
     {
-        $io->writeln('Indexing Contao packages: ');
-        $progressBar = $io->createProgressBar(count($names));
+        $this->io->writeln('Parsing Contao packages: ');
+        $progressBar = $this->io->createProgressBar(count($names));
         $progressBar->start();
 
         foreach (array_chunk($names, 100) as $chunk) {
             $objects = [];
 
             foreach ($chunk as $name) {
-                $objects[] = $this->extractSearchData($this->getPackage($name));
+                $package = $this->getPackage($name);
+
+                if (null !== $package) {
+                    $objects[] = $this->extractSearchData($package);
+                }
+
                 $progressBar->advance();
             }
 
@@ -88,20 +96,20 @@ class IndexCommand extends Command
         }
 
         $progressBar->finish();
-        $io->newLine();
+        $this->io->newLine(2);
     }
 
-    private function indexMetapackages(SymfonyStyle $io, array $packages)
+    private function indexMetapackages(array $packages)
     {
         $names = $this->getPackageNames('metapackage');
 
-        $io->writeln('Indexing metapackages: ');
-        $progressBar = $io->createProgressBar(count($names));
+        $this->io->writeln('Parsing metapackages: ');
+        $progressBar = $this->io->createProgressBar(count($names));
 
         $this->indexRequirements($progressBar, $names, $packages);
 
         $progressBar->finish();
-        $io->newLine();
+        $this->io->newLine(2);
     }
 
     private function indexRequirements(ProgressBar $progressBar, array $names, array $required): void
@@ -115,6 +123,12 @@ class IndexCommand extends Command
 
         foreach ($names as $name) {
             $package = $this->getPackage($name);
+
+            if (null === $package) {
+                $progressBar->advance();
+                continue;
+            }
+
             $version = reset($package['versions']);
 
             if (!isset($version['require'])) {
@@ -142,43 +156,42 @@ class IndexCommand extends Command
 
     private function getPackageNames(string $type): array
     {
-        $response = $this->http()->request('GET', 'https://packagist.org/packages/list.json?type='.$type);
-
-        if ($response->getStatusCode() !== 200) {
-            throw new \RuntimeException(sprintf('Response error. Status code %s', $response->getStatusCode()));
-        }
-
-        $data = json_decode($response->getBody(), true);
+        $data = $this->getJson('https://packagist.org/packages/list.json?type='.$type, $cacheHit);
 
         return $data['packageNames'];
     }
 
-    private function getPackage(string $name): array
+    private function getPackage(string $name): ?array
     {
-        $response = $this->http()->request('GET', 'https://packagist.org/packages/'.$name.'.json');
+        $data = $this->getJson('https://packagist.org/packages/'.$name.'.json', $packageCache);
+        $versions = $this->getJson('https://packagist.org/p/'.$name.'.json', $composerCache);
 
-        if ($response->getStatusCode() !== 200) {
-            throw new \RuntimeException(sprintf('Response error. Status code %s', $response->getStatusCode()));
+        if ($packageCache && $composerCache) {
+            $this->io->writeln(' – Cache HIT for ' . $name, SymfonyStyle::VERBOSITY_DEBUG);
+            return null;
         }
 
-        $data = json_decode($response->getBody(), true);
+        $this->io->writeln(' – Cache MISS for ' . $name, SymfonyStyle::VERBOSITY_DEBUG);
 
-        return $data['package'];
+        $package = $data['package'];
+        $package['versions'] = $versions['packages'][$name];
+
+        return $package;
     }
 
     private function extractSearchData(array $package): array
     {
-        $version = reset($package['versions']);
+        $version = end($package['versions']);
 
         $data = [
             'name' => $package['name'],
-            'description' => $package['description'],
+            'description' => $version['description'],
             'keywords' => $version['keywords'],
             'homepage' => $version['homepage'] ?? ($package['repository'] ?? ''),
             'license' => $version['license'] ?? '',
             'downloads' => $package['downloads']['total'] ?? 0,
             'stars' => $package['favers'] ?? 0,
-            'managed' => $package['type'] !== 'contao-bundle' || isset($version['extra']['contao-manager-plugin']),
+            'managed' => $version['type'] !== 'contao-bundle' || isset($version['extra']['contao-manager-plugin']),
             'abandoned' => isset($package['abandoned']),
             'replacement' => $package['abandoned'] ?? '',
         ];
@@ -197,6 +210,9 @@ class IndexCommand extends Command
             $this->index = $client->initIndex(@getenv('ALGOLIA_INDEX', true));
         }
 
+        $this->io->newLine();
+        $this->io->writeln('Indexing '.count($objects).' objects …');
+
         $this->index->saveObjects($objects, 'name');
     }
 
@@ -206,16 +222,29 @@ class IndexCommand extends Command
             return $this->client;
         }
 
-        $cacheDir = __DIR__.'/../../cache/http';
+        $cacheDir = __DIR__.'/../../cache';
 
         (new Filesystem())->mkdir($cacheDir);
 
         $stack = HandlerStack::create();
-        $storage = new Psr6CacheStorage(new FilesystemAdapter('', 60, $cacheDir));
+        $storage = new Psr6CacheStorage(new FilesystemAdapter('', 0, $cacheDir));
         $stack->push(new CacheMiddleware(new PublicCacheStrategy($storage)), 'cache');
 
         $this->client = new GuzzleClient(['handler' => $stack]);
 
         return $this->client;
+    }
+
+    private function getJson($uri, &$cacheHit)
+    {
+        $response = $this->http()->request('GET', $uri);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new \RuntimeException(sprintf('Response error. Status code %s', $response->getStatusCode()));
+        }
+
+        $cacheHit = $response->getHeaderLine(CacheMiddleware::HEADER_CACHE_INFO) === CacheMiddleware::HEADER_CACHE_HIT;
+
+        return json_decode($response->getBody(), true);
     }
 }
