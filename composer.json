@@ -3,9 +3,18 @@
     "license": "MIT",
     "type": "project",
     "description": "Composer package indexer",
+    "keywords": ["contao", "manager", "composer", "packages", "algolia", "search"],
+    "homepage": "https://www.contao.org",
     "authors": [
-
+        {
+            "name": "Andreas Schempp",
+            "homepage": "https://github.com/aschempp",
+            "role": "Developer"
+        }
     ],
+    "support": {
+        "source": "https://github.com/contao/package-indexer"
+    },
     "autoload": {
         "psr-4": {
             "Contao\\PackageIndexer\\": "src/"
@@ -13,9 +22,12 @@
     },
     "require": {
         "php": "^7.1",
+        "symfony/cache": "^3.3",
         "symfony/console": "^3.3",
+        "symfony/dotenv": "^3.3",
         "algolia/algoliasearch-client-php": "^1.18",
         "guzzlehttp/guzzle": "^6.3",
-        "symfony/dotenv": "^3.3"
+        "kevinrob/guzzle-cache-middleware": "^2.1",
+        "symfony/filesystem": "^3.3"
     }
 }

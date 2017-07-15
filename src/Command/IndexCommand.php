@@ -13,12 +13,23 @@ namespace Contao\PackageIndexer\Command;
 use AlgoliaSearch\Client as AlgoliaClient;
 use AlgoliaSearch\Index;
 use GuzzleHttp\Client as GuzzleClient;
+use GuzzleHttp\HandlerStack;
+use Kevinrob\GuzzleCache\CacheMiddleware;
+use Kevinrob\GuzzleCache\Storage\Psr6CacheStorage;
+use Kevinrob\GuzzleCache\Strategy\PublicCacheStrategy;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Filesystem\Filesystem;
 
 class IndexCommand extends Command
 {
+    /**
+     * @var GuzzleClient
+     */
+    private $client;
+
     /**
      * @var Index
      */
@@ -97,8 +108,7 @@ class IndexCommand extends Command
 
     private function getPackageNames(string $type): array
     {
-        $client = new GuzzleClient();
-        $response = $client->request('GET', 'https://packagist.org/packages/list.json?type='.$type);
+        $response = $this->http()->request('GET', 'https://packagist.org/packages/list.json?type='.$type);
 
         if ($response->getStatusCode() !== 200) {
             throw new \RuntimeException(sprintf('Response error. Status code %s', $response->getStatusCode()));
@@ -111,8 +121,7 @@ class IndexCommand extends Command
 
     private function getPackage(string $name): array
     {
-        $client = new GuzzleClient();
-        $response = $client->request('GET', 'https://packagist.org/packages/'.$name.'.json');
+        $response = $this->http()->request('GET', 'https://packagist.org/packages/'.$name.'.json');
 
         if ($response->getStatusCode() !== 200) {
             throw new \RuntimeException(sprintf('Response error. Status code %s', $response->getStatusCode()));
@@ -155,5 +164,24 @@ class IndexCommand extends Command
         }
 
         $this->index->saveObjects($objects, 'name');
+    }
+
+    private function http()
+    {
+        if (null !== $this->client) {
+            return $this->client;
+        }
+
+        $cacheDir = __DIR__.'/../../cache/http';
+
+        (new Filesystem())->mkdir($cacheDir);
+
+        $stack = HandlerStack::create();
+        $storage = new Psr6CacheStorage(new FilesystemAdapter('', 60, $cacheDir));
+        $stack->push(new CacheMiddleware(new PublicCacheStrategy($storage)), 'cache');
+
+        $this->client = new GuzzleClient(['handler' => $stack]);
+
+        return $this->client;
     }
 }
