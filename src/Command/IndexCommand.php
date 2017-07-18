@@ -196,7 +196,7 @@ class IndexCommand extends Command
             'description' => $latest['description'],
             'keywords' => $latest['keywords'],
             'homepage' => $latest['homepage'] ?? ($package['repository'] ?? 'https://packagist.org/packages/'.$package['name']),
-            'links' => $latest['support'],
+            'links' => $latest['support'] ?? [],
             'license' => $latest['license'] ?? '',
             'downloads' => $package['downloads']['total'] ?? 0,
             'stars' => $package['favers'] ?? 0,
@@ -216,7 +216,9 @@ class IndexCommand extends Command
         }
 
         if (null === $this->index) {
+            /** @noinspection PhpMethodParametersCountMismatchInspection */
             $client = new AlgoliaClient(@getenv('ALGOLIA_APP', true), @getenv('ALGOLIA_KEY', true));
+            /** @noinspection PhpMethodParametersCountMismatchInspection */
             $this->index = $client->initIndex(@getenv('ALGOLIA_INDEX', true));
         }
 
