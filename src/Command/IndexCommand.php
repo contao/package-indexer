@@ -21,6 +21,7 @@ use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
@@ -43,6 +44,11 @@ class IndexCommand extends Command
     private $io;
 
     /**
+     * @var array
+     */
+    private $uncached = [];
+
+    /**
      * {@inheritdoc}
      */
     protected function configure()
@@ -52,6 +58,7 @@ class IndexCommand extends Command
         $this
             ->setName('index')
             ->setDescription('Starts the indexing process')
+            ->addOption('uncached', null, InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY)
         ;
     }
 
@@ -60,6 +67,8 @@ class IndexCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $this->uncached = $input->getOption('uncached');
+
         $packages = array_unique(array_merge(
             $this->getPackageNames('contao-bundle'),
             $this->getPackageNames('contao-module')
@@ -139,7 +148,7 @@ class IndexCommand extends Command
                 $supported = false;
 
                 foreach ($requires as $require) {
-                    if ($this->extractSearchData($this->getPackage($require))['supported']) {
+                    if ($this->extractSearchData($this->getPackage($require, false))['supported']) {
                         $supported = true;
                         break;
                     }
@@ -174,7 +183,7 @@ class IndexCommand extends Command
         $data = $this->getJson('https://packagist.org/packages/'.$name.'.json', $packageCache);
         $versions = $this->getJson('https://packagist.org/p/'.$name.'.json', $composerCache);
 
-        if ($cache && $packageCache && $composerCache) {
+        if ($cache && $packageCache && $composerCache && !in_array($name, $this->uncached)) {
             $this->io->writeln(' – Cache HIT for ' . $name, SymfonyStyle::VERBOSITY_DEBUG);
             return null;
         }
