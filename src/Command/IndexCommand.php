@@ -135,8 +135,16 @@ class IndexCommand extends Command
                 continue;
             }
 
-            if (count(array_intersect(array_keys($version['require']), $required)) > 0) {
-                $objects[$name] = $this->extractSearchData($package);
+            if (!empty($requires = array_intersect(array_keys($version['require']), $required))) {
+                $supported = false;
+
+                foreach ($requires as $require) {
+                    if ($this->extractSearchData($this->getPackage($require))['supported']) {
+                        $supported = true;
+                        break;
+                    }
+                }
+                $objects[$name] = $this->extractSearchData($package, $supported);
                 $required[] = $name;
             } elseif (count($sub = array_intersect(array_keys($version['require']), $names)) > 0
                 && !in_array($name, $sub)
@@ -161,12 +169,12 @@ class IndexCommand extends Command
         return $data['packageNames'];
     }
 
-    private function getPackage(string $name): ?array
+    private function getPackage(string $name, $cache = true): ?array
     {
         $data = $this->getJson('https://packagist.org/packages/'.$name.'.json', $packageCache);
         $versions = $this->getJson('https://packagist.org/p/'.$name.'.json', $composerCache);
 
-        if ($packageCache && $composerCache) {
+        if ($cache && $packageCache && $composerCache) {
             $this->io->writeln(' – Cache HIT for ' . $name, SymfonyStyle::VERBOSITY_DEBUG);
             return null;
         }
@@ -179,14 +187,13 @@ class IndexCommand extends Command
         return $package;
     }
 
-    private function extractSearchData(array $package): array
+    private function extractSearchData(array $package, $supported = true): array
     {
-        $supported = false;
         $latest = end($package['versions']);
 
         foreach ($package['versions'] as $version) {
-            if (isset($version['require']['contao/core-bundle'])) {
-                $supported = true;
+            if (isset($version['require']['contao/core'])) {
+                $supported = false;
                 break;
             }
         }
