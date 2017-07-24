@@ -138,27 +138,32 @@ class IndexCommand extends Command
                 continue;
             }
 
-            $version = reset($package['versions']);
+            $supported = null;
 
-            if (!isset($version['require'])) {
-                continue;
+            foreach ($package['versions'] as $version) {
+                if (!isset($version['require'])) {
+                    continue;
+                }
+
+                if (!empty($requires = array_intersect(array_keys($version['require']), $required))) {
+                    foreach ($requires as $require) {
+                        $supported = false;
+
+                        if ($this->extractSearchData($this->getPackage($require, false))['supported']) {
+                            $supported = true;
+                            break(2);
+                        }
+                    }
+                } elseif (count($sub = array_intersect(array_keys($version['require']), $names)) > 0
+                    && !in_array($name, $sub)
+                ) {
+                    $children[] = $name;
+                }
             }
 
-            if (!empty($requires = array_intersect(array_keys($version['require']), $required))) {
-                $supported = false;
-
-                foreach ($requires as $require) {
-                    if ($this->extractSearchData($this->getPackage($require, false))['supported']) {
-                        $supported = true;
-                        break;
-                    }
-                }
+            if (true === $supported || false === $supported) {
                 $objects[$name] = $this->extractSearchData($package, $supported);
                 $required[] = $name;
-            } elseif (count($sub = array_intersect(array_keys($version['require']), $names)) > 0
-                && !in_array($name, $sub)
-            ) {
-                $children[] = $name;
             }
 
             $progressBar->advance();
