@@ -201,14 +201,16 @@ class IndexCommand extends Command
         return $package;
     }
 
-    private function extractSearchData(array $package, $supported = true): array
+    private function extractSearchData(array $package, $supported = false): array
     {
         $latest = end($package['versions']);
 
-        foreach ($package['versions'] as $version) {
-            if (isset($version['require']['contao/core'])) {
-                $supported = false;
-                break;
+        if (!$supported) {
+            foreach ($package['versions'] as $version) {
+                if (isset($version['require']['contao/core-bundle'])) {
+                    $supported = true;
+                    break;
+                }
             }
         }
 
