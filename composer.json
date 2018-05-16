@@ -28,6 +28,7 @@
         "algolia/algoliasearch-client-php": "^1.18",
         "guzzlehttp/guzzle": "^6.3",
         "kevinrob/guzzle-cache-middleware": "^2.1",
-        "symfony/filesystem": "^3.3"
+        "symfony/filesystem": "^3.3",
+        "symfony/yaml": "3.3"
     }
 }

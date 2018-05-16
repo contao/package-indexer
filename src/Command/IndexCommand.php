@@ -20,6 +20,7 @@ use Kevinrob\GuzzleCache\Strategy\PublicCacheStrategy;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -49,6 +50,11 @@ class IndexCommand extends Command
     private $uncached = [];
 
     /**
+     * @var language
+     */
+    private $language;
+
+    /**
      * {@inheritdoc}
      */
     protected function configure()
@@ -58,6 +64,7 @@ class IndexCommand extends Command
         $this
             ->setName('index')
             ->setDescription('Starts the indexing process')
+            ->addArgument('language', InputArgument::OPTIONAL, 'Which language index do you want to write? (en is default; Use ISO 639-1)')
             ->addOption('uncached', null, InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY)
         ;
     }
@@ -67,6 +74,7 @@ class IndexCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $this->language = $input->getArgument('language') ?? 'en';
         $this->uncached = $input->getOption('uncached');
 
         $packages = array_unique(array_merge(
@@ -214,12 +222,18 @@ class IndexCommand extends Command
             }
         }
 
+        $obj = new MetaImportCommand();
+        $localData = $obj->parseYml($package['name'], $this->language);
+        $logo = $obj->getLogo($package['name']);
+
         $data = [
             'name' => $package['name'],
-            'description' => $latest['description'],
-            'keywords' => $latest['keywords'],
-            'homepage' => $latest['homepage'] ?? '',
-            'support' => $latest['support'] ?? [],
+            'title' => $localData['title'] ?? '',
+            'description' => $localData['description'] ?? $latest['description'],
+            'keywords' => $localData['keywords'] ?? $latest['keywords'],
+            'homepage' => $localData['homepage'] ?? $latest['homepage'] ?? '',
+            'category' => $localData['category'] ?? '',
+            'support' => $localData['support'] ?? $latest['support'] ?? [],
             'license' => $latest['license'] ?? '',
             'downloads' => $package['downloads']['total'] ?? 0,
             'stars' => $package['favers'] ?? 0,
@@ -227,6 +241,7 @@ class IndexCommand extends Command
             'managed' => $latest['type'] !== 'contao-bundle' || isset($latest['extra']['contao-manager-plugin']),
             'abandoned' => isset($package['abandoned']),
             'replacement' => $package['abandoned'] ?? '',
+            'logo' => $logo ?? '',
         ];
 
         return $data;
@@ -242,7 +257,15 @@ class IndexCommand extends Command
             /** @noinspection PhpMethodParametersCountMismatchInspection */
             $client = new AlgoliaClient(@getenv('ALGOLIA_APP', true), @getenv('ALGOLIA_KEY', true));
             /** @noinspection PhpMethodParametersCountMismatchInspection */
-            $this->index = $client->initIndex(@getenv('ALGOLIA_INDEX', true));
+
+            $index = @getenv('ALGOLIA_INDEX', true);
+
+            if($this->language != 'en')
+            {
+                $index = 'v2_' . $this->language;
+            }
+
+            $this->index = $client->initIndex($index);
         }
 
         $this->io->newLine();
