@@ -10,6 +10,7 @@
  */
 
 use Contao\PackageIndexer\Command\IndexCommand;
+use Contao\PackageIndexer\Command\MetaImportCommand;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Dotenv\Dotenv;
 
@@ -25,4 +26,5 @@ if (file_exists(__DIR__.'/.env')) {
 
 $application = new Application('Contao Package Indexer', 'dev');
 $application->add(new IndexCommand());
+$application->add(new MetaImportCommand());
 $application->run();
