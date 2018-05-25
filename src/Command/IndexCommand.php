@@ -11,7 +11,7 @@
 namespace Contao\PackageIndexer\Command;
 
 use AlgoliaSearch\Client as AlgoliaClient;
-use AlgoliaSearch\Index;
+use Contao\PackageIndexer\AlgoliaIndex;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\HandlerStack;
 use Kevinrob\GuzzleCache\CacheMiddleware;
@@ -28,15 +28,17 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class IndexCommand extends Command
 {
+    private const LANGUAGES = ['en', 'de', 'br', 'cs', 'es', 'fa', 'fr', 'ja', 'lv', 'nl', 'pl', 'ru', 'sr', 'zh'];
+
     /**
      * @var GuzzleClient
      */
     private $client;
 
     /**
-     * @var Index
+     * @var AlgoliaIndex[]
      */
-    private $index;
+    private $indexes;
 
     /**
      * @var SymfonyStyle
@@ -64,6 +66,8 @@ class IndexCommand extends Command
 
     /**
      * {@inheritdoc}
+     * @throws \Exception
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
@@ -81,6 +85,12 @@ class IndexCommand extends Command
         $this->indexMetapackages($packages);
     }
 
+    /**
+     * @param array $names
+     *
+     * @throws \Exception
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     private function indexPackages(array $names): void
     {
         $this->io->writeln('Parsing Contao packages: ');
@@ -108,6 +118,12 @@ class IndexCommand extends Command
         $this->io->newLine(2);
     }
 
+    /**
+     * @param array $packages
+     *
+     * @throws \Exception
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     private function indexMetapackages(array $packages)
     {
         $names = $this->getPackageNames('metapackage');
@@ -121,6 +137,14 @@ class IndexCommand extends Command
         $this->io->newLine(2);
     }
 
+    /**
+     * @param ProgressBar $progressBar
+     * @param array       $names
+     * @param array       $required
+     *
+     * @throws \Exception
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     private function indexRequirements(ProgressBar $progressBar, array $names, array $required): void
     {
         $max = $progressBar->getMaxSteps();
@@ -176,6 +200,12 @@ class IndexCommand extends Command
         }
     }
 
+    /**
+     * @param string $type
+     *
+     * @return array
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     private function getPackageNames(string $type): array
     {
         $data = $this->getJson('https://packagist.org/packages/list.json?type='.$type, $cacheHit);
@@ -183,17 +213,29 @@ class IndexCommand extends Command
         return $data['packageNames'];
     }
 
+    /**
+     * @param string $name
+     * @param bool   $cache
+     *
+     * @return array|null
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     private function getPackage(string $name, $cache = true): ?array
     {
-        $data = $this->getJson('https://packagist.org/packages/'.$name.'.json', $packageCache);
-        $versions = $this->getJson('https://packagist.org/p/'.$name.'.json', $composerCache);
-
-        if ($cache && $packageCache && $composerCache && !in_array($name, $this->uncached)) {
-            $this->io->writeln(' – Cache HIT for ' . $name, SymfonyStyle::VERBOSITY_DEBUG);
+        try {
+            $data = $this->getJson('https://packagist.org/packages/' . $name . '.json', $packageCache);
+            $versions = $this->getJson('https://packagist.org/p/' . $name . '.json', $composerCache);
+        } catch (\Exception $e) {
+            $this->io->writeln(' - ERROR fetching package '.$name, SymfonyStyle::VERBOSITY_NORMAL);
             return null;
         }
 
-        $this->io->writeln(' – Cache MISS for ' . $name, SymfonyStyle::VERBOSITY_DEBUG);
+        if ($cache && $packageCache && $composerCache && !in_array($name, $this->uncached)) {
+            $this->io->writeln(' – Cache HIT for '.$name, SymfonyStyle::VERBOSITY_DEBUG);
+            return null;
+        }
+
+        $this->io->writeln(' – Cache MISS for '.$name, SymfonyStyle::VERBOSITY_DEBUG);
 
         $package = $data['package'];
         $package['versions'] = $versions['packages'][$name];
@@ -216,6 +258,7 @@ class IndexCommand extends Command
 
         $data = [
             'name' => $package['name'],
+            'title' => $package['name'],
             'description' => $latest['description'],
             'keywords' => $latest['keywords'],
             'homepage' => $latest['homepage'] ?? '',
@@ -232,23 +275,32 @@ class IndexCommand extends Command
         return $data;
     }
 
+    /**
+     * @param array $objects
+     *
+     * @throws \Exception
+     */
     private function index(array $objects): void
     {
         if (0 === count($objects)) {
             return;
         }
 
-        if (null === $this->index) {
-            /** @noinspection PhpMethodParametersCountMismatchInspection */
+        if (null === $this->indexes) {
             $client = new AlgoliaClient(@getenv('ALGOLIA_APP', true), @getenv('ALGOLIA_KEY', true));
-            /** @noinspection PhpMethodParametersCountMismatchInspection */
-            $this->index = $client->initIndex(@getenv('ALGOLIA_INDEX', true));
+            $this->indexes = [];
+
+            foreach (self::LANGUAGES as $language) {
+                $this->indexes[$language] = new AlgoliaIndex($client, $language);
+            }
         }
 
         $this->io->newLine();
         $this->io->writeln('Indexing '.count($objects).' objects …');
 
-        $this->index->saveObjects($objects, 'name');
+        foreach ($this->indexes as $index) {
+            $index->push($objects);
+        }
     }
 
     private function http()
@@ -270,6 +322,13 @@ class IndexCommand extends Command
         return $this->client;
     }
 
+    /**
+     * @param $uri
+     * @param $cacheHit
+     *
+     * @return mixed
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     private function getJson($uri, &$cacheHit)
     {
         $response = $this->http()->request('GET', $uri);
