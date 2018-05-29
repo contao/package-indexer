@@ -86,8 +86,7 @@ class V2Index implements IndexInterface
         }
 
         $package['logo'] = sprintf(
-            "data:%s;base64,%s",
-            mime_content_type(self::METADATA_ROOT.'/'.$image),
+            "data:image/svg+xml;base64,%s",
             base64_encode(file_get_contents(self::METADATA_ROOT.'/'.$image))
         );
     }
