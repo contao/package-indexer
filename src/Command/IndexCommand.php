@@ -39,7 +39,7 @@ class IndexCommand extends Command
     /**
      * Blacklisted packages that should not be indexed
      */
-    private const BLACKLIST = ['contao/installation-bundle', 'contao/module-devtools', 'contao/module-repository'];
+    private const BLACKLIST = ['contao/installation-bundle', 'contao/module-devtools', 'contao/module-repository', 'contao/contao'];
 
     /**
      * @var GuzzleClient
@@ -91,15 +91,10 @@ class IndexCommand extends Command
         $this->uncached = $input->getOption('uncached');
         $this->clearAll = (bool) $input->getOption('clear-all');
 
-        $packages = array_diff(
-            array_unique(
-                array_merge(
-                    $this->getPackageNames('contao-bundle'),
-                    $this->getPackageNames('contao-module')
-                )
-            ),
-            self::BLACKLIST
-        );
+        $packages = array_unique(array_merge(
+            $this->getPackageNames('contao-bundle'),
+            $this->getPackageNames('contao-module')
+        ));
 
         $this->io = new SymfonyStyle($input, $output);
         $this->io->newLine();
@@ -233,7 +228,7 @@ class IndexCommand extends Command
     {
         $data = $this->getJson('https://packagist.org/packages/list.json?type='.$type, $cacheHit);
 
-        return $data['packageNames'];
+        return array_diff($data['packageNames'], self::BLACKLIST);
     }
 
     /**
