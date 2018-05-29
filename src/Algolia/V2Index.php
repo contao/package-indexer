@@ -11,7 +11,7 @@ use Symfony\Component\Yaml\Yaml;
 class V2Index implements IndexInterface
 {
     private const INDEX_PREFIX = 'v2_';
-    private const METADATA_ROOT = __DIR__.'/../metadata/meta';
+    private const METADATA_ROOT = __DIR__.'/../../metadata/meta';
 
     /**
      * @var Index
