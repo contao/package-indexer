@@ -30,7 +30,16 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class IndexCommand extends Command
 {
+    /**
+     * Languages for the search index
+     * @see https://github.com/contao/contao-manager/blob/master/src/i18n/locales.js
+     */
     private const LANGUAGES = ['en', 'de', 'br', 'cs', 'es', 'fa', 'fr', 'ja', 'lv', 'nl', 'pl', 'ru', 'sr', 'zh'];
+
+    /**
+     * Blacklisted packages that should not be indexed
+     */
+    private const BLACKLIST = ['contao/installation-bundle', 'contao/module-devtools', 'contao/module-repository'];
 
     /**
      * @var GuzzleClient
@@ -75,10 +84,15 @@ class IndexCommand extends Command
     {
         $this->uncached = $input->getOption('uncached');
 
-        $packages = array_unique(array_merge(
-            $this->getPackageNames('contao-bundle'),
-            $this->getPackageNames('contao-module')
-        ));
+        $packages = array_diff(
+            array_unique(
+                array_merge(
+                    $this->getPackageNames('contao-bundle'),
+                    $this->getPackageNames('contao-module')
+                )
+            ),
+            self::BLACKLIST
+        );
 
         $this->io = new SymfonyStyle($input, $output);
         $this->io->newLine();
