@@ -34,14 +34,19 @@ class V2Index implements IndexInterface
      * @param Client          $client
      * @param string          $language
      * @param Filesystem|null $filesystem
+     * @param bool            $clearIndex
      *
      * @throws \AlgoliaSearch\AlgoliaException
      */
-    public function __construct(Client $client, string $language, Filesystem $filesystem = null)
+    public function __construct(Client $client, string $language, Filesystem $filesystem = null, bool $clearIndex = false)
     {
         $this->index = $client->initIndex(self::INDEX_PREFIX.$language);
         $this->language = $language;
         $this->filesystem = $filesystem ?: new Filesystem();
+
+        if ($clearIndex) {
+            $this->index->clearIndex();
+        }
     }
 
     public function push(array $packages): void

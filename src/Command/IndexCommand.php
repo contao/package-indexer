@@ -62,6 +62,11 @@ class IndexCommand extends Command
     private $uncached = [];
 
     /**
+     * @var bool
+     */
+    private $clearAll = false;
+
+    /**
      * {@inheritdoc}
      */
     protected function configure()
@@ -72,6 +77,7 @@ class IndexCommand extends Command
             ->setName('index')
             ->setDescription('Starts the indexing process')
             ->addOption('uncached', null, InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY)
+            ->addOption('clear-all', null, InputOption::VALUE_NONE, '', false)
         ;
     }
 
@@ -83,6 +89,7 @@ class IndexCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->uncached = $input->getOption('uncached');
+        $this->clearAll = (bool) $input->getOption('clear-all');
 
         $packages = array_diff(
             array_unique(
@@ -304,10 +311,10 @@ class IndexCommand extends Command
 
         if (null === $this->indexes) {
             $client = new AlgoliaClient(@getenv('ALGOLIA_APP', true), @getenv('ALGOLIA_KEY', true));
-            $this->indexes = [new V1Index($client)];
+            $this->indexes = [new V1Index($client, $this->clearAll)];
 
             foreach (self::LANGUAGES as $language) {
-                $this->indexes[$language] = new V2Index($client, $language);
+                $this->indexes[$language] = new V2Index($client, $language, null, $this->clearAll);
             }
         }
 

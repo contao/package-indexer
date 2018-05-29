@@ -17,13 +17,18 @@ class V1Index implements IndexInterface
     /**
      * Constructor.
      *
-     * @param Client          $client
+     * @param Client $client
+     * @param bool   $clearIndex
      *
      * @throws \AlgoliaSearch\AlgoliaException
      */
-    public function __construct(Client $client)
+    public function __construct(Client $client, bool $clearIndex = false)
     {
         $this->index = $client->initIndex(self::INDEX_NAME);
+
+        if ($clearIndex) {
+            $this->index->clearIndex();
+        }
     }
 
     public function push(array $packages): void
