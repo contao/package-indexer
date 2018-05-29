@@ -77,7 +77,7 @@ class IndexCommand extends Command
             ->setName('index')
             ->setDescription('Starts the indexing process')
             ->addOption('uncached', null, InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY)
-            ->addOption('clear-all', null, InputOption::VALUE_NONE, '', false)
+            ->addOption('clear-all', null, InputOption::VALUE_NONE)
         ;
     }
 
