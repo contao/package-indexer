@@ -65,16 +65,21 @@ class V2Index implements IndexInterface
 
     private function addLogo(array &$package): void
     {
-        $image = self::METADATA_ROOT.'/'.$package['name'].'/logo.svg';
+        list ($vendor, $name) = explode('/', $package['name'], 2);
+        $image = sprintf('%s/%s/logo.svg', $vendor, $name);
 
-        if (!$this->filesystem->exists($image)) {
-            return;
+        if (!$this->filesystem->exists(self::METADATA_ROOT.'/'.$image)) {
+            $image = sprintf('%s/logo.svg', $vendor);
+
+            if (!$this->filesystem->exists(self::METADATA_ROOT.'/'.$image)) {
+                return;
+            }
         }
 
         // if bigger than 5kb use raw url
-        if (@filesize($image) > (5 * 1024)) {
+        if (@filesize(self::METADATA_ROOT.'/'.$image) > (5 * 1024)) {
             $package['logo'] = sprintf(
-                'https://rawgit.com/contao/package-metadata/master/meta/%s/logo.svg',
+                'https://rawgit.com/contao/package-metadata/master/meta/'.$image,
                 $package['name']
             );
             return;
@@ -82,8 +87,8 @@ class V2Index implements IndexInterface
 
         $package['logo'] = sprintf(
             "data:%s;base64,%s",
-            mime_content_type($image),
-            base64_encode(file_get_contents($image))
+            mime_content_type(self::METADATA_ROOT.'/'.$image),
+            base64_encode(file_get_contents(self::METADATA_ROOT.'/'.$image))
         );
     }
 
