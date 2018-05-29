@@ -253,7 +253,7 @@ class IndexCommand extends Command
             return null;
         }
 
-        if ($cache && $packageCache && $composerCache && !in_array($name, $this->uncached)) {
+        if ($cache && $packageCache && $composerCache && !$this->clearAll && !in_array($name, $this->uncached)) {
             $this->io->writeln(' – Cache HIT for '.$name, SymfonyStyle::VERBOSITY_DEBUG);
             return null;
         }
