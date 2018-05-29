@@ -1,6 +1,6 @@
 <?php
 
-namespace Contao\PackageIndexer;
+namespace Contao\PackageIndexer\Algolia;
 
 use AlgoliaSearch\Client;
 use AlgoliaSearch\Index;
@@ -8,7 +8,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
 
-class AlgoliaIndex
+class V2Index implements IndexInterface
 {
     private const INDEX_PREFIX = 'v2_';
     private const METADATA_ROOT = __DIR__.'/../metadata/meta';

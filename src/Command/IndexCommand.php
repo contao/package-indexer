@@ -11,7 +11,9 @@
 namespace Contao\PackageIndexer\Command;
 
 use AlgoliaSearch\Client as AlgoliaClient;
-use Contao\PackageIndexer\AlgoliaIndex;
+use Contao\PackageIndexer\Algolia\IndexInterface;
+use Contao\PackageIndexer\Algolia\V1Index;
+use Contao\PackageIndexer\Algolia\V2Index;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\HandlerStack;
 use Kevinrob\GuzzleCache\CacheMiddleware;
@@ -36,7 +38,7 @@ class IndexCommand extends Command
     private $client;
 
     /**
-     * @var AlgoliaIndex[]
+     * @var IndexInterface[]
      */
     private $indexes;
 
@@ -288,10 +290,10 @@ class IndexCommand extends Command
 
         if (null === $this->indexes) {
             $client = new AlgoliaClient(@getenv('ALGOLIA_APP', true), @getenv('ALGOLIA_KEY', true));
-            $this->indexes = [];
+            $this->indexes = [new V1Index($client)];
 
             foreach (self::LANGUAGES as $language) {
-                $this->indexes[$language] = new AlgoliaIndex($client, $language);
+                $this->indexes[$language] = new V2Index($client, $language);
             }
         }
 
