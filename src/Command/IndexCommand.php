@@ -241,19 +241,21 @@ class IndexCommand extends Command
     private function getPackage(string $name, $cache = true): ?array
     {
         try {
-            $data = $this->getJson('https://packagist.org/packages/' . $name . '.json', $packageCache);
-            $versions = $this->getJson('https://packagist.org/p/' . $name . '.json', $composerCache);
+            $data = $this->getJson('https://packagist.org/packages/' . $name . '.json', $cacheHitIgnored);
+            $versions = $this->getJson('https://packagist.org/p/' . $name . '.json', $cacheHit);
         } catch (\Exception $e) {
             $this->io->writeln(' - ERROR fetching package '.$name, SymfonyStyle::VERBOSITY_NORMAL);
             return null;
         }
 
-        if ($cache && $packageCache && $composerCache && !$this->clearAll && !in_array($name, $this->uncached)) {
+        if ($cache && $cacheHit && !$this->clearAll && !in_array($name, $this->uncached)) {
             $this->io->writeln(' – Cache HIT for '.$name, SymfonyStyle::VERBOSITY_DEBUG);
             return null;
         }
 
-        $this->io->writeln(' – Cache MISS for '.$name, SymfonyStyle::VERBOSITY_DEBUG);
+        if (!$cacheHit) {
+            $this->io->writeln(' – Cache MISS for '.$name, SymfonyStyle::VERBOSITY_DEBUG);
+        }
 
         $package = $data['package'];
         $package['versions'] = $versions['packages'][$name];
