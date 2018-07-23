@@ -12,8 +12,8 @@ used by the [Contao Manager] to search for packages.
 
 The application requires two environment variables to run:
 
- 1. `ALGOLIA_APP` is the name of your Algolia application ID
- 2. `ALGOLIA_KEY` is your Algolia API key
+ 1. `ALGOLIA_APP_ID` is the name of your Algolia application ID
+ 2. `ALGOLIA_API_KEY` is your Algolia API key
 
 You can either setup these variables in your environment, or add a
 `.env` file to your project root which will automatically be loaded

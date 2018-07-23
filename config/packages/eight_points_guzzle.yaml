@@ -1,0 +1,7 @@
+eight_points_guzzle:
+    clients:
+        packagist:
+            plugin:
+                cache:
+                    enabled: true
+                    strategy: "guzzle.public_cache_strategy"

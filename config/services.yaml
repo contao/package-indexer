@@ -1,0 +1,70 @@
+parameters:
+    app_metadata_dir: '%kernel.project_dir%/metadata'
+
+services:
+    _defaults:
+        autoconfigure: true
+        public: false
+
+    AlgoliaSearch\Client:
+        arguments:
+            - '%env(ALGOLIA_APP_ID)%'
+            - '%env(ALGOLIA_API_KEY)%'
+
+    App\Cache\MetaAwarePackageHashGenerator: ~
+
+    App\Cache\PackageHashGenerator: ~
+
+    App\Package\Factory:
+        arguments:
+            - '%app_metadata_dir%/meta'
+
+    indexer.basic:
+        class: App\Indexer
+        arguments:
+            - '@logger'
+            - '@App\Packagist'
+            - '@AlgoliaSearch\Client'
+            - '@cache.app'
+            - '@App\Cache\PackageHashGenerator'
+
+    indexer.extended_meta:
+        class: App\Indexer
+        arguments:
+            - '@logger'
+            - '@App\Packagist'
+            - '@AlgoliaSearch\Client'
+            - '@cache.app'
+            - '@App\Cache\MetaAwarePackageHashGenerator'
+
+    App\Command\IndexCommand:
+        arguments:
+            - '@indexer.basic'
+            - '%app_metadata_dir%'
+
+    App\Command\IndexMetaCommand:
+        arguments:
+            - '@indexer.extended_meta'
+            - '%app_metadata_dir%'
+
+    App\Packagist:
+        arguments:
+            - '@logger'
+            - '@eight_points_guzzle.client.packagist'
+            - '@App\Package\Factory'
+
+    # Guzzle cache services
+    guzzle.psr6_cache_storage:
+        class: Kevinrob\GuzzleCache\Storage\Psr6CacheStorage
+        arguments: ['@cache.app']
+        public: false
+
+    guzzle.private_cache_strategy:
+        class: Kevinrob\GuzzleCache\Strategy\PrivateCacheStrategy
+        arguments: ['@guzzle.psr6_cache_storage']
+        public: false
+
+    guzzle.public_cache_strategy:
+        class: Kevinrob\GuzzleCache\Strategy\PublicCacheStrategy
+        arguments: ['@guzzle.psr6_cache_storage']
+        public: false

@@ -12,15 +12,15 @@ declare(strict_types=1);
 
 namespace App\Command;
 
-class IndexCommand extends AbstractIndexCommand
+class IndexMetaCommand extends AbstractIndexCommand
 {
     protected function getCommandName(): string
     {
-        return 'package-indexer:index';
+        return 'package-indexer:index-meta';
     }
 
     protected function getCommandDescription(): string
     {
-        return 'Starts the indexing process with basic information (designed to run more often)';
+        return 'Starts the indexing process with extended information (designed to run once or twice a month)';
     }
 }
