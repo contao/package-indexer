@@ -74,7 +74,12 @@ class Factory
         $latest = end($data['p']);
 
         foreach ($data['packages']['versions'] as $version => $versionData) {
-            if (!$supported && isset($versionData['require']['contao/core-bundle'])) {
+            if (!$supported
+                && (
+                    isset($versionData['require']['contao/core-bundle'])
+                    || 'contao-component' === $versionData['type']
+                )
+            ) {
                 $supported = true;
             }
 
