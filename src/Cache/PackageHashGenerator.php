@@ -32,6 +32,7 @@ class PackageHashGenerator
         $info[] = $package->getVersions();
         $info[] = $package->getLicense();
         $info[] = $package->isSupported();
+        $info[] = $package->isManaged();
         $info[] = $package->isAbandoned();
         $info[] = $package->getReplacement();
         $info[] = $package->getLogo();
