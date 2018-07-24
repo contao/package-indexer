@@ -84,8 +84,7 @@ class Factory
             }
 
             if (!$managed
-                && ('contao-bundle' === $versionData['type']
-                || 'contao-component' === $versionData['type']
+                && ('contao-bundle' !== $versionData['type']
                 || isset($versionData['extra']['contao-manager-plugin']))
             ) {
                 $managed = true;
