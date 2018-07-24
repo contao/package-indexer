@@ -75,7 +75,7 @@ class Indexer
         $this->packageHashGenerator = $packageHashGenerator;
     }
 
-    public function index(string $package = null, bool $dryRun = false, bool $ignoreCache = false)
+    public function index(string $package = null, bool $dryRun = false, bool $ignoreCache = false, $clearIndex = false)
     {
         $this->packages = [];
 
@@ -92,7 +92,7 @@ class Indexer
         $this->collectPackages($packageNames);
         $this->collectMetapackages();
 
-        $this->indexPackages($dryRun, $ignoreCache);
+        $this->indexPackages($dryRun, $ignoreCache, $clearIndex);
     }
 
     private function collectPackages(array $packageNames): void
@@ -123,13 +123,13 @@ class Indexer
         }
     }
 
-    private function indexPackages(bool $dryRun, bool $ignoreCache): void
+    private function indexPackages(bool $dryRun, bool $ignoreCache, bool $clearIndex): void
     {
         if (0 === \count($this->packages)) {
             return;
         }
 
-        $this->createIndexes();
+        $this->createIndexes($clearIndex);
         $packagesPerLanguage = [];
 
         foreach (self::LANGUAGES as $language) {
@@ -193,12 +193,16 @@ class Indexer
         $this->cacheItemPool->commit();
     }
 
-    private function createIndexes(): void
+    private function createIndexes(bool $clearIndex): void
     {
         if (null === $this->indexes) {
             foreach (self::LANGUAGES as $language) {
                 try {
                     $this->indexes[$language] = $this->client->initIndex(self::INDEX_PREFIX.$language);
+
+                    if ($clearIndex) {
+                        $this->indexes[$language]->clearIndex();
+                    }
                 } catch (AlgoliaException $e) {
                 }
             }

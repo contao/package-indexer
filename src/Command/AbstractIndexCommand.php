@@ -52,7 +52,8 @@ abstract class AbstractIndexCommand extends Command
             ->setDescription($this->getCommandDescription())
             ->addArgument('package', InputArgument::OPTIONAL, 'Restrict indexing to a given package name.')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Do not index any data. Very useful together with -vvv.')
-            ->addOption('no-cache', null, InputOption::VALUE_NONE, 'Do not consider local cache (forces an index update).');
+            ->addOption('no-cache', null, InputOption::VALUE_NONE, 'Do not consider local cache (forces an index update).')
+            ->addOption('clear-index', null, InputOption::VALUE_NONE, 'Clears algolia indexes completely (full re-index).');
     }
 
     /**
@@ -72,8 +73,8 @@ abstract class AbstractIndexCommand extends Command
         $this->indexer->index(
             $input->getArgument('package'),
             (bool) $input->getOption('dry-run'),
-            (bool) $input->getOption('no-cache')
-
+            (bool) $input->getOption('no-cache'),
+            (bool) $input->getOption('clear-index')
         );
     }
 
