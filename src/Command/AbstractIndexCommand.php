@@ -51,7 +51,8 @@ abstract class AbstractIndexCommand extends Command
             ->setName($this->getCommandName())
             ->setDescription($this->getCommandDescription())
             ->addArgument('package', InputArgument::OPTIONAL, 'Restrict indexing to a given package name.')
-            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Do not index any data. Very useful together with -vvv.');
+            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Do not index any data. Very useful together with -vvv.')
+            ->addOption('no-cache', null, InputOption::VALUE_NONE, 'Do not consider local cache (forces an index update).');
     }
 
     /**
@@ -68,7 +69,12 @@ abstract class AbstractIndexCommand extends Command
 
         $git->pull();
 
-        $this->indexer->index($input->getArgument('package'), (bool) $input->getOption('dry-run'));
+        $this->indexer->index(
+            $input->getArgument('package'),
+            (bool) $input->getOption('dry-run'),
+            (bool) $input->getOption('no-cache')
+
+        );
     }
 
     abstract protected function getCommandName(): string;

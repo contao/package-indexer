@@ -75,7 +75,7 @@ class Indexer
         $this->packageHashGenerator = $packageHashGenerator;
     }
 
-    public function index(string $package = null, bool $dryRun = false)
+    public function index(string $package = null, bool $dryRun = false, bool $ignoreCache = false)
     {
         $this->packages = [];
 
@@ -92,7 +92,7 @@ class Indexer
         $this->collectPackages($packageNames);
         $this->collectMetapackages();
 
-        $this->indexPackages($dryRun);
+        $this->indexPackages($dryRun, $ignoreCache);
     }
 
     private function collectPackages(array $packageNames): void
@@ -123,7 +123,7 @@ class Indexer
         }
     }
 
-    private function indexPackages(bool $dryRun): void
+    private function indexPackages(bool $dryRun, bool $ignoreCache): void
     {
         if (0 === \count($this->packages)) {
             return;
@@ -145,19 +145,24 @@ class Indexer
 
                 $cacheItem = $this->cacheItemPool->getItem($hash);
 
-                if (!$cacheItem->isHit()) {
-                    $hit = false;
-                    $cacheItem->set(true);
-                    $this->cacheItemPool->saveDeferred($cacheItem);
-                    $packagesPerLanguage[$language][] = $package;
+                if (!$ignoreCache) {
+                    if (!$cacheItem->isHit()) {
+                        $hitMsg = 'miss';
+                        $cacheItem->set(true);
+                        $this->cacheItemPool->saveDeferred($cacheItem);
+                        $packagesPerLanguage[$language][] = $package;
+                    } else {
+                        $hitMsg = 'hit';
+                    }
                 } else {
-                    $hit = true;
+                    $packagesPerLanguage[$language][] = $package;
+                    $hitMsg = 'ignored';
                 }
 
-                $this->logger->debug(sprintf('Cache entry for package "%s" and language "%s" was a %s (hash: %s)',
+                $this->logger->debug(sprintf('Cache entry for package "%s" and language "%s" was %s (hash: %s)',
                     $packageName,
                     $language,
-                    $hit ? 'hit' : 'miss',
+                    $hitMsg,
                     $hash
                 ));
             }
