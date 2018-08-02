@@ -103,8 +103,8 @@ class Factory
         $package->setSupport($latest['support'] ?? []);
         $package->setVersions($versions);
         $package->setLicense($latest['license'] ?? []);
-        $package->setDownloads($data['packages']['downloads']['total'] ?? 0);
-        $package->setStars($data['packages']['favers'] ?? 0);
+        $package->setDownloads((int) ($data['packages']['downloads']['total'] ?? 0));
+        $package->setStars((int) ($data['packages']['favers'] ?? 0));
         $package->setSupported($supported);
         $package->setManaged($managed);
         $package->setAbandoned(isset($data['packages']['abandoned']));
