@@ -67,29 +67,11 @@ class Factory
 
     private function setBasicData(array $data, Package $package)
     {
-        $supported = false;
-        $managed = false;
         $versions = [];
 
         $latest = end($data['p']);
 
         foreach ($data['packages']['versions'] as $version => $versionData) {
-            if (!$supported
-                && (
-                    isset($versionData['require']['contao/core-bundle'])
-                    || 'contao-component' === $versionData['type']
-                )
-            ) {
-                $supported = true;
-            }
-
-            if (!$managed
-                && ('contao-bundle' !== $versionData['type']
-                || isset($versionData['extra']['contao-manager-plugin']))
-            ) {
-                $managed = true;
-            }
-
             $versions[] = $version;
         }
 
@@ -105,13 +87,37 @@ class Factory
         $package->setLicense($latest['license'] ?? []);
         $package->setDownloads((int) ($data['packages']['downloads']['total'] ?? 0));
         $package->setStars((int) ($data['packages']['favers'] ?? 0));
-        $package->setSupported($supported);
-        $package->setManaged($managed);
+        $package->setSupported($this->isSupported($data['packages']['versions']));
+        $package->setManaged($this->isManaged($data['packages']['versions']));
         $package->setAbandoned(isset($data['packages']['abandoned']));
         $package->setReplacement($data['packages']['replacement'] ?? '');
 
         $this->addLogo($package);
         $this->addMeta($package);
+    }
+
+    private function isSupported(array $versionsData): bool
+    {
+        foreach ($versionsData as $version => $versionData) {
+            if (isset($versionData['require']['contao/core-bundle'])
+                || 'contao-component' === $versionData['type']
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function isManaged(array $versionsData): bool
+    {
+        foreach ($versionsData as $version => $versionData) {
+            if ('contao-bundle' !== $versionData['type'] || isset($versionData['extra']['contao-manager-plugin'])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function addMeta(Package $package): void
