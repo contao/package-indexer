@@ -18,12 +18,14 @@ services:
     App\Package\Factory:
         arguments:
             - '%app_metadata_dir%/meta'
+            - '@App\Packagist'
 
     indexer.basic:
         class: App\Indexer
         arguments:
             - '@logger'
             - '@App\Packagist'
+            - '@App\Package\Factory'
             - '@AlgoliaSearch\Client'
             - '@cache.app'
             - '@App\Cache\PackageHashGenerator'
@@ -33,6 +35,7 @@ services:
         arguments:
             - '@logger'
             - '@App\Packagist'
+            - '@App\Package\Factory'
             - '@AlgoliaSearch\Client'
             - '@cache.app'
             - '@App\Cache\MetaAwarePackageHashGenerator'
@@ -51,7 +54,6 @@ services:
         arguments:
             - '@logger'
             - '@eight_points_guzzle.client.packagist'
-            - '@App\Package\Factory'
 
     # Guzzle cache services
     guzzle.psr6_cache_storage:

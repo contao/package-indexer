@@ -12,9 +12,6 @@ declare(strict_types=1);
 
 namespace App;
 
-use App\Package\Factory;
-use App\Package\MetaPackage;
-use App\Package\Package;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Kevinrob\GuzzleCache\CacheMiddleware;
@@ -22,6 +19,8 @@ use Psr\Log\LoggerInterface;
 
 class Packagist
 {
+    const PLATFORM_PACKAGE_REGEX = '{^(?:php(?:-64bit|-ipv6|-zts|-debug)?|hhvm|(?:ext|lib)-[^/ ]+)$}i';
+
     /**
      * Blacklisted packages that should not be found.
      */
@@ -37,16 +36,10 @@ class Packagist
      */
     private $logger;
 
-    /**
-     * @var Factory
-     */
-    private $packageFactory;
-
-    public function __construct(LoggerInterface $logger, Client $client, Factory $packageFactory)
+    public function __construct(LoggerInterface $logger, Client $client)
     {
         $this->client = $client;
         $this->logger = $logger;
-        $this->packageFactory = $packageFactory;
     }
 
     public function getPackageNames(string $type): array
@@ -62,20 +55,13 @@ class Packagist
         return array_diff($data['packageNames'], self::BLACKLIST);
     }
 
-    public function getPackage(string $name): ?Package
+    public function getPackageData(string $name): array
     {
-        return $this->packageFactory->createBasicFromPackagist($this->getPackageData($name));
-    }
+        if (preg_match(self::PLATFORM_PACKAGE_REGEX, $name)) {
+            return [];
+        }
 
-    public function getMetaPackage(string $name): ?MetaPackage
-    {
-        return $this->packageFactory->createMetaFromPackagist($this->getPackageData($name));
-    }
-
-    private function getPackageData(string $name): array
-    {
         try {
-            $data['packages'] = $this->getJson('https://packagist.org/packages/'.$name.'.json')['package'];
             $packagesData = $this->getJson('https://packagist.org/packages/'.$name.'.json');
 
             if (!isset($packagesData['package'])) {

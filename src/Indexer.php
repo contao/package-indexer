@@ -16,6 +16,7 @@ use AlgoliaSearch\AlgoliaException;
 use AlgoliaSearch\Client;
 use AlgoliaSearch\Index;
 use App\Cache\PackageHashGenerator;
+use App\Package\Factory;
 use App\Package\Package;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
@@ -66,13 +67,19 @@ class Indexer
      */
     private $packageHashGenerator;
 
-    public function __construct(LoggerInterface $logger, Packagist $packagist, Client $client, CacheItemPoolInterface $cacheItemPool, PackageHashGenerator $packageHashGenerator)
+    /**
+     * @var Factory
+     */
+    private $packageFactory;
+
+    public function __construct(LoggerInterface $logger, Packagist $packagist, Factory $packageFactory, Client $client, CacheItemPoolInterface $cacheItemPool, PackageHashGenerator $packageHashGenerator)
     {
         $this->packagist = $packagist;
         $this->client = $client;
         $this->logger = $logger;
         $this->cacheItemPool = $cacheItemPool;
         $this->packageHashGenerator = $packageHashGenerator;
+        $this->packageFactory = $packageFactory;
     }
 
     public function index(string $package = null, bool $dryRun = false, bool $ignoreCache = false, $clearIndex = false)
@@ -98,7 +105,7 @@ class Indexer
     private function collectPackages(array $packageNames): void
     {
         foreach ($packageNames as $packageName) {
-            $package = $this->packagist->getPackage($packageName);
+            $package = $this->packageFactory->createBasicFromPackagist($packageName);
 
             if (null !== $package) {
                 $this->packages[$packageName] = $package;
@@ -111,7 +118,7 @@ class Indexer
         $packages = array_keys($this->packages);
 
         foreach ($this->packagist->getPackageNames('metapackage') as $packageName) {
-            $metaPackage = $this->packagist->getMetaPackage($packageName);
+            $metaPackage = $this->packageFactory->createMetaFromPackagist($packageName);
 
             if (null === $metaPackage) {
                 continue;

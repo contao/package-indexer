@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace App\Package;
 
 use App\Indexer;
+use App\Packagist;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
@@ -25,26 +26,59 @@ class Factory
     private $metaDataDir;
 
     /**
+     * @var Packagist
+     */
+    private $packagist;
+
+    /**
      * @var Filesystem
      */
     private $fs;
 
-    public function __construct(string $metaDataDir)
+    /**
+     * @var array
+     */
+    private $cache = [];
+
+    public function __construct(string $metaDataDir, Packagist $packagist)
     {
         $this->metaDataDir = $metaDataDir;
+        $this->packagist = $packagist;
         $this->fs = new Filesystem();
     }
 
-    public function createBasicFromPackagist(array $data): ?Package
+    public function createBasicFromPackagist(string $name): ?Package
     {
+        $cacheKey = 'basic-'.$name;
+        if (isset($this->cache[$cacheKey])) {
+            return $this->cache[$cacheKey];
+        }
+
+        $data = $this->packagist->getPackageData($name);
+
+        if (0 === \count($data)) {
+            return null;
+        }
+
         $package = new Package();
         $this->setBasicData($data, $package);
 
-        return $package;
+        return $this->cache[$cacheKey] = $package;
     }
 
-    public function createMetaFromPackagist(array $data): ?MetaPackage
+    public function createMetaFromPackagist(string $name): ?MetaPackage
     {
+        $cacheKey = 'meta-'.$name;
+        if (isset($this->cache[$cacheKey])) {
+            return $this->cache[$cacheKey];
+        }
+
+        $data = $this->packagist->getPackageData($name);
+
+        if (0 === \count($data)) {
+            return null;
+        }
+
         $package = new MetaPackage();
         $this->setBasicData($data, $package);
 
@@ -60,9 +94,27 @@ class Factory
             }
         }
 
-        $package->setRequiredPackagesAccrossVersions(array_keys($requires));
+        $requires = array_keys($requires);
 
-        return $package;
+        foreach ($requires as $require) {
+            $reqPackage = $this->createBasicFromPackagist($require);
+
+            if (null === $reqPackage) {
+                continue;
+            }
+
+            if (!$package->isSupported() && $reqPackage->isSupported()) {
+                $package->setSupported(true);
+            }
+
+            if (!$package->isManaged() && $reqPackage->isManaged()) {
+                $package->setManaged(true);
+            }
+        }
+
+        $package->setRequiredPackagesAccrossVersions($requires);
+
+        return $this->cache[$cacheKey] = $package;
     }
 
     private function setBasicData(array $data, Package $package)
