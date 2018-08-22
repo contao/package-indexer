@@ -76,6 +76,13 @@ class Packagist
     {
         try {
             $data['packages'] = $this->getJson('https://packagist.org/packages/'.$name.'.json')['package'];
+            $packagesData = $this->getJson('https://packagist.org/packages/'.$name.'.json');
+
+            if (!isset($packagesData['package'])) {
+                return [];
+            }
+
+            $data['packages'] = $packagesData['package'];
             $data['p'] = $this->getJson('https://repo.packagist.org/p/'.$name.'.json')['packages'][$name];
         } catch (GuzzleException $e) {
             $this->logger->error(sprintf('Error fetching package "%s"', $name));
