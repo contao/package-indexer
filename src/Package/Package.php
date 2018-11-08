@@ -80,11 +80,6 @@ class Package
     private $abandoned = false;
 
     /**
-     * @var bool
-     */
-    private $private = false;
-
-    /**
      * @var string
      */
     private $replacement = '';
@@ -252,18 +247,6 @@ class Package
     public function setAbandoned(bool $abandoned): self
     {
         $this->abandoned = $abandoned;
-
-        return $this;
-    }
-
-    public function isPrivate(): bool
-    {
-        return $this->private;
-    }
-
-    public function setPrivate(bool $private): self
-    {
-        $this->private = $private;
 
         return $this;
     }
