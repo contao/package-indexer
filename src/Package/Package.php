@@ -94,9 +94,6 @@ class Package
      */
     private $meta = [];
 
-    /**
-     * Package constructor.
-     */
     public function __construct(string $name)
     {
         $this->name = $name;
@@ -313,7 +310,6 @@ class Package
             'supported' => $this->isSupported(),
             'managed' => $this->isManaged(),
             'abandoned' => $this->isAbandoned(),
-            'private' => $this->isPrivate(),
             'replacement' => $this->getReplacement(),
             'logo' => $this->getLogo(),
         ];
