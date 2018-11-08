@@ -13,17 +13,15 @@ declare(strict_types=1);
 namespace App\Package;
 
 use App\Indexer;
+use App\MetaDataRepository;
 use App\Packagist;
-use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Yaml\Exception\ParseException;
-use Symfony\Component\Yaml\Yaml;
 
 class Factory
 {
     /**
-     * @var string
+     * @var MetaDataRepository
      */
-    private $metaDataDir;
+    private $metaData;
 
     /**
      * @var Packagist
@@ -31,20 +29,14 @@ class Factory
     private $packagist;
 
     /**
-     * @var Filesystem
-     */
-    private $fs;
-
-    /**
      * @var array
      */
     private $cache = [];
 
-    public function __construct(string $metaDataDir, Packagist $packagist)
+    public function __construct(MetaDataRepository $metaData, Packagist $packagist)
     {
-        $this->metaDataDir = $metaDataDir;
+        $this->metaData = $metaData;
         $this->packagist = $packagist;
-        $this->fs = new Filesystem();
     }
 
     public function createBasicFromPackagist(string $name): ?Package
@@ -60,8 +52,8 @@ class Factory
             return null;
         }
 
-        $package = new Package();
-        $this->setBasicData($data, $package);
+        $package = new Package($data['packages']['name']);
+        $this->setBasicDataFromPackagist($data, $package);
 
         return $this->cache[$cacheKey] = $package;
     }
@@ -79,8 +71,8 @@ class Factory
             return null;
         }
 
-        $package = new MetaPackage();
-        $this->setBasicData($data, $package);
+        $package = new MetaPackage($data['packages']['name']);
+        $this->setBasicDataFromPackagist($data, $package);
 
         $requires = [];
 
@@ -117,7 +109,21 @@ class Factory
         return $this->cache[$cacheKey] = $package;
     }
 
-    private function setBasicData(array $data, Package $package)
+    public function createPrivate(string $name): Package
+    {
+        $package = new Package($name);
+        $package->setTitle($name);
+        $package->setSupported(true);
+        $package->setManaged(true);
+        $package->setPrivate(true);
+
+        $package->setLogo($this->metaData->getLogoForPackage($package));
+        $this->addMeta($package);
+
+        return $package;
+    }
+
+    private function setBasicDataFromPackagist(array $data, Package $package)
     {
         $versions = [];
 
@@ -129,8 +135,7 @@ class Factory
 
         sort($versions);
 
-        $package->setName($data['packages']['name']);
-        $package->setTitle($data['packages']['name']);
+        $package->setTitle($package->getName());
         $package->setDescription($latest['description'] ?? '');
         $package->setKeywords($latest['keywords'] ?? []);
         $package->setHomepage($latest['homepage'] ?? '');
@@ -143,8 +148,9 @@ class Factory
         $package->setManaged($this->isManaged($data['packages']['versions']));
         $package->setAbandoned(isset($data['packages']['abandoned']));
         $package->setReplacement($data['packages']['replacement'] ?? '');
+        $package->setPrivate(false);
 
-        $this->addLogo($package);
+        $package->setLogo($this->metaData->getLogoForPackage($package));
         $this->addMeta($package);
     }
 
@@ -177,60 +183,9 @@ class Factory
         $meta = [];
 
         foreach (Indexer::LANGUAGES as $language) {
-            $data = $this->extractMetadata($package->getName(), $language);
-            $meta[$language] = $this->filterMetadata($data);
+            $meta[$language] = $this->metaData->getMetaDataForPackage($package, $language);
         }
 
         $package->setMeta($meta);
-    }
-
-    private function addLogo(Package $package): void
-    {
-        list($vendor, $name) = explode('/', $package->getName(), 2);
-        $image = sprintf('%s/%s/logo.svg', $vendor, $name);
-
-        if (!$this->fs->exists($this->metaDataDir.'/'.$image)) {
-            $image = sprintf('%s/logo.svg', $vendor);
-
-            if (!$this->fs->exists($this->metaDataDir.'/'.$image)) {
-                return;
-            }
-        }
-
-        // if bigger than 5kb use raw url
-        if (@filesize($this->metaDataDir.'/'.$image) > (5 * 1024)) {
-            $logo = sprintf(
-                'https://rawgit.com/contao/package-metadata/master/meta/'.$image,
-                $package->getName()
-            );
-        } else {
-            $logo = sprintf(
-                'data:image/svg+xml;base64,%s',
-                base64_encode(file_get_contents($this->metaDataDir.'/'.$image))
-            );
-        }
-
-        $package->setLogo($logo);
-    }
-
-    private function filterMetadata(array $data): array
-    {
-        return array_intersect_key(
-            $data,
-            array_flip(['title', 'description', 'keywords', 'homepage', 'support'])
-        );
-    }
-
-    private function extractMetadata(string $packageName, string $language): array
-    {
-        $file = $this->metaDataDir.'/'.$packageName.'/'.$language.'.yml';
-
-        try {
-            $data = Yaml::parseFile($file);
-
-            return (array_key_exists($language, $data) && \is_array($data[$language])) ? $data[$language] : [];
-        } catch (ParseException $e) {
-            return [];
-        }
     }
 }

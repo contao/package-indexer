@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Indexer;
+use App\MetaDataRepository;
 use GitWrapper\GitWrapper;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -28,14 +29,14 @@ abstract class AbstractIndexCommand extends Command
     private $indexer;
 
     /**
-     * @var string
+     * @var MetaDataRepository
      */
-    private $metaDataDir;
+    private $metaDataRepository;
 
-    public function __construct(Indexer $indexer, string $metaDataDir)
+    public function __construct(Indexer $indexer, MetaDataRepository $metaDataRepository)
     {
         $this->indexer = $indexer;
-        $this->metaDataDir = $metaDataDir;
+        $this->metaDataRepository = $metaDataRepository;
 
         parent::__construct();
     }
@@ -62,7 +63,7 @@ abstract class AbstractIndexCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $gitWrapper = new GitWrapper();
-        $git = $gitWrapper->workingCopy($this->metaDataDir);
+        $git = $gitWrapper->workingCopy($this->metaDataRepository->getDir());
 
         if (!$git->isCloned()) {
             $git->cloneRepository('https://github.com/contao/package-metadata.git');

@@ -72,7 +72,12 @@ class Indexer
      */
     private $packageFactory;
 
-    public function __construct(LoggerInterface $logger, Packagist $packagist, Factory $packageFactory, Client $client, CacheItemPoolInterface $cacheItemPool, PackageHashGenerator $packageHashGenerator)
+    /**
+     * @var MetaDataRepository
+     */
+    private $metaDataRepository;
+
+    public function __construct(LoggerInterface $logger, Packagist $packagist, Factory $packageFactory, Client $client, CacheItemPoolInterface $cacheItemPool, PackageHashGenerator $packageHashGenerator, MetaDataRepository $metaDataRepository)
     {
         $this->packagist = $packagist;
         $this->client = $client;
@@ -80,6 +85,7 @@ class Indexer
         $this->cacheItemPool = $cacheItemPool;
         $this->packageHashGenerator = $packageHashGenerator;
         $this->packageFactory = $packageFactory;
+        $this->metaDataRepository = $metaDataRepository;
     }
 
     public function index(string $package = null, bool $dryRun = false, bool $ignoreCache = false, $clearIndex = false)
@@ -98,6 +104,7 @@ class Indexer
 
         $this->collectPackages($packageNames);
         $this->collectMetapackages();
+        $this->collectPrivatePackages();
 
         $this->indexPackages($dryRun, $ignoreCache, $clearIndex);
     }
@@ -127,6 +134,17 @@ class Indexer
             if ($metaPackage->requiresOneOf($packages)) {
                 $this->packages[$packageName] = $metaPackage;
             }
+        }
+    }
+
+    private function collectPrivatePackages(): void
+    {
+        $publicPackages = array_keys($this->packages);
+        $availablePackages = $this->metaDataRepository->getPackageNames();
+        $privatePackages = array_diff($availablePackages, $publicPackages);
+
+        foreach ($privatePackages as $packageName) {
+            $this->packages[$packageName] = $this->packageFactory->createPrivate($packageName);
         }
     }
 

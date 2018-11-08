@@ -1,6 +1,3 @@
-parameters:
-    app_metadata_dir: '%kernel.project_dir%/metadata'
-
 services:
     _defaults:
         autoconfigure: true
@@ -11,13 +8,17 @@ services:
             - '%env(ALGOLIA_APP_ID)%'
             - '%env(ALGOLIA_API_KEY)%'
 
+    App\MetaDataRepository:
+        arguments:
+            - '%kernel.project_dir%/metadata'
+
     App\Cache\MetaAwarePackageHashGenerator: ~
 
     App\Cache\PackageHashGenerator: ~
 
     App\Package\Factory:
         arguments:
-            - '%app_metadata_dir%/meta'
+            - '@App\MetaDataRepository'
             - '@App\Packagist'
 
     indexer.basic:
@@ -29,6 +30,7 @@ services:
             - '@AlgoliaSearch\Client'
             - '@cache.app'
             - '@App\Cache\PackageHashGenerator'
+            - '@App\MetaDataRepository'
 
     indexer.extended_meta:
         class: App\Indexer
@@ -39,16 +41,17 @@ services:
             - '@AlgoliaSearch\Client'
             - '@cache.app'
             - '@App\Cache\MetaAwarePackageHashGenerator'
+            - '@App\MetaDataRepository'
 
     App\Command\IndexCommand:
         arguments:
             - '@indexer.basic'
-            - '%app_metadata_dir%'
+            - '@App\MetaDataRepository'
 
     App\Command\IndexMetaCommand:
         arguments:
             - '@indexer.extended_meta'
-            - '%app_metadata_dir%'
+            - '@App\MetaDataRepository'
 
     App\Packagist:
         arguments:

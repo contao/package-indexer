@@ -22,67 +22,72 @@ class Package
     /**
      * @var string
      */
-    private $title;
+    private $title = '';
 
     /**
      * @var string
      */
-    private $description;
+    private $description = '';
 
     /**
      * @var array
      */
-    private $keywords;
+    private $keywords = [];
 
     /**
      * @var string
      */
-    private $homepage;
+    private $homepage = '';
 
     /**
      * @var array
      */
-    private $support;
+    private $support = [];
 
     /**
      * @var array
      */
-    private $versions;
+    private $versions = [];
 
     /**
      * @var array
      */
-    private $license;
+    private $license = [];
 
     /**
      * @var int
      */
-    private $downloads;
+    private $downloads = 0;
 
     /**
      * @var int
      */
-    private $stars;
+    private $stars = 0;
 
     /**
      * @var bool
      */
-    private $supported;
+    private $supported = false;
 
     /**
      * @var bool
      */
-    private $managed;
+    private $managed = false;
 
     /**
      * @var bool
      */
-    private $abandoned;
+    private $abandoned = false;
+
+    /**
+     * @var bool
+     */
+    private $private = false;
 
     /**
      * @var string
      */
-    private $replacement;
+    private $replacement = '';
 
     /**
      * @var string
@@ -94,16 +99,17 @@ class Package
      */
     private $meta = [];
 
+    /**
+     * Package constructor.
+     */
+    public function __construct(string $name)
+    {
+        $this->name = $name;
+    }
+
     public function getName(): string
     {
         return $this->name;
-    }
-
-    public function setName(string $name): self
-    {
-        $this->name = $name;
-
-        return $this;
     }
 
     public function getTitle(): string
@@ -250,6 +256,18 @@ class Package
         return $this;
     }
 
+    public function isPrivate(): bool
+    {
+        return $this->private;
+    }
+
+    public function setPrivate(bool $private): self
+    {
+        $this->private = $private;
+
+        return $this;
+    }
+
     public function getReplacement(): string
     {
         return $this->replacement;
@@ -312,6 +330,7 @@ class Package
             'supported' => $this->isSupported(),
             'managed' => $this->isManaged(),
             'abandoned' => $this->isAbandoned(),
+            'private' => $this->isPrivate(),
             'replacement' => $this->getReplacement(),
             'logo' => $this->getLogo(),
         ];
