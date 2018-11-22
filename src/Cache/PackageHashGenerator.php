@@ -34,10 +34,14 @@ class PackageHashGenerator
         $info[] = $package->isSupported();
         $info[] = $package->isManaged();
         $info[] = $package->isAbandoned();
-        $info[] = $package->isPrivate();
         $info[] = $package->getReplacement();
         $info[] = $package->getLogo();
         $info[] = $package->getMetaForLanguage($language);
+
+        // Treat existing packages and private: false the same
+        if ($package->isPrivate()) {
+            $info[] = $package->isPrivate();
+        }
 
         return $info;
     }
