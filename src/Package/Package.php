@@ -80,6 +80,11 @@ class Package
     private $abandoned = false;
 
     /**
+     * @var bool
+     */
+    private $private = false;
+
+    /**
      * @var string
      */
     private $replacement = '';
@@ -248,6 +253,18 @@ class Package
         return $this;
     }
 
+    public function isPrivate(): bool
+    {
+        return $this->private;
+    }
+
+    public function setPrivate(bool $private): self
+    {
+        $this->private = $private;
+
+        return $this;
+    }
+
     public function getReplacement(): string
     {
         return $this->replacement;
@@ -310,6 +327,7 @@ class Package
             'supported' => $this->isSupported(),
             'managed' => $this->isManaged(),
             'abandoned' => $this->isAbandoned(),
+            'private' => $this->isPrivate(),
             'replacement' => $this->getReplacement(),
             'logo' => $this->getLogo(),
         ];

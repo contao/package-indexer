@@ -116,6 +116,7 @@ class Factory
         $package->setSupported(true);
         $package->setManaged(true);
         $package->setLicense(['proprietary']);
+        $package->setPrivate(true);
 
         $package->setLogo($this->metaData->getLogoForPackage($package));
         $this->addMeta($package);
