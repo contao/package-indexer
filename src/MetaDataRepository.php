@@ -79,7 +79,7 @@ class MetaDataRepository
         // if bigger than 5kb use raw url
         if (@filesize($this->getMetaDataDir().'/'.$image) > (5 * 1024)) {
             $logo = sprintf(
-                'https://rawgit.com/contao/package-metadata/master/meta/'.$image,
+                'https://contao.github.io/package-metadata/meta/'.$image,
                 $package->getName()
             );
         } else {
