@@ -205,7 +205,7 @@ class Indexer
                 if (!$dryRun) {
                     $this->indexes[$language]->saveObjects($objects, 'name');
                 } else {
-                    $this->logger->debug(sprintf('Objects: %s', json_encode($objects)));
+                    $this->logger->debug(sprintf('Objects to index for language "%s": %s', $language, json_encode($objects)));
                 }
             }
 
