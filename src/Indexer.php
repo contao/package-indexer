@@ -107,6 +107,37 @@ class Indexer
         $this->collectPrivatePackages();
 
         $this->indexPackages($dryRun, $ignoreCache, $clearIndex);
+
+        // If the index was not cleared completely, delete old/removed packages
+        if (!$clearIndex) {
+            $this->deleteRemovedPackages($dryRun);
+        }
+    }
+
+    private function deleteRemovedPackages(bool $dryRun)
+    {
+        foreach ($this->indexes as $language => $index) {
+            $packagesToDeleteFromIndex = [];
+
+            foreach ($index->browse('', ['attributesToRetrieve' => ['objectID']]) as $item) {
+                // Check if object still exists in collected packages
+                if (!isset($this->packages[$item['objectID']])) {
+                    $packagesToDeleteFromIndex[] = $item['objectID'];
+                }
+            }
+
+            if (0 === \count($packagesToDeleteFromIndex)) {
+                continue;
+            }
+
+            if (!$dryRun) {
+                foreach ($packagesToDeleteFromIndex as $objectID) {
+                    $index->deleteObject($objectID);
+                }
+            } else {
+                $this->logger->debug(sprintf('Objects to delete from index for language "%s": %s', $language, json_encode($packagesToDeleteFromIndex)));
+            }
+        }
     }
 
     private function collectPackages(array $packageNames): void
