@@ -149,6 +149,7 @@ class Factory
         $package->setManaged($this->isManaged($data['packages']['versions']));
         $package->setAbandoned(isset($data['packages']['abandoned']));
         $package->setReplacement($data['packages']['replacement'] ?? '');
+        $package->setPrivate(false);
 
         $package->setLogo($this->metaData->getLogoForPackage($package));
         $this->addMeta($package);
