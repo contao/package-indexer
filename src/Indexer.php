@@ -28,7 +28,7 @@ class Indexer
      *
      * @see https://github.com/contao/contao-manager/blob/master/src/i18n/locales.js
      */
-    public const LANGUAGES = ['en', 'de', 'br', 'cs', 'es', 'fa', 'fr', 'ja', 'lv', 'nl', 'pl', 'ru', 'sr', 'zh'];
+    public const LANGUAGES = ['en', 'de', 'br', 'cs', 'es', 'fa', 'fr', 'it', 'ja', 'lv', 'nl', 'pl', 'pt', 'ru', 'sr', 'zh'];
     private const CACHE_PREFIX = 'package-indexer';
     private const INDEX_PREFIX = 'v2_';
 
