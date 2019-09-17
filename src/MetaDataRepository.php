@@ -110,7 +110,7 @@ class MetaDataRepository
     {
         return array_intersect_key(
             $data,
-            array_flip(['title', 'description', 'keywords', 'homepage', 'support'])
+            array_flip(['title', 'description', 'keywords', 'homepage', 'support', 'suggest'])
         );
     }
 }
