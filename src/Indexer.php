@@ -187,6 +187,11 @@ class Indexer
 
         // Ignore the ones that do not need any update
         foreach ($this->packages as $packageName => $package) {
+            // Unsupported packages do not belong in the index
+            if (false === $package->isSupported() || false === $package->isManaged()) {
+                continue;
+            }
+
             $hash = self::CACHE_PREFIX.'-'.$this->packageHashGenerator->getHash($package);
 
             $cacheItem = $this->cacheItemPool->getItem($hash);
