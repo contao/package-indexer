@@ -100,6 +100,11 @@ class Package
     private $replacement = '';
 
     /**
+     * @var array
+     */
+    private $suggest = [];
+
+    /**
      * @var string
      */
     private $logo = '';
@@ -311,6 +316,18 @@ class Package
         return $this;
     }
 
+    public function getSuggest(): array
+    {
+        return $this->suggest;
+    }
+
+    public function setSuggest(array $suggest): self
+    {
+        $this->suggest = $suggest;
+
+        return $this;
+    }
+
     public function getLogo(): string
     {
         return $this->logo;
@@ -365,6 +382,7 @@ class Package
             'abandoned' => $this->isAbandoned(),
             'private' => $this->isPrivate(),
             'replacement' => $this->getReplacement(),
+            'suggest' => $this->getSuggest(),
             'logo' => $this->getLogo(),
             'languages' => $allLanguages ?? [$language],
         ];
