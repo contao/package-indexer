@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * Contao Package Indexer
  *
- * @copyright  Copyright (c) 2018, terminal42 gmbh
+ * @copyright  Copyright (c) 2019, terminal42 gmbh
  * @author     terminal42 gmbh <info@terminal42.ch>
  * @license    MIT
  */
@@ -16,12 +16,12 @@ use App\Package\Package;
 
 class PackageHashGenerator
 {
-    public function getHash(Package $package, string $language): string
+    public function getHash(Package $package): string
     {
-        return sha1(json_encode($this->getHashRelevantInfo($package, $language)));
+        return sha1(json_encode($this->getHashRelevantInfo($package)));
     }
 
-    protected function getHashRelevantInfo(Package $package, string $language): array
+    protected function getHashRelevantInfo(Package $package): array
     {
         $info = [];
         $info[] = $package->getName();
@@ -37,7 +37,7 @@ class PackageHashGenerator
         $info[] = $package->isPrivate();
         $info[] = $package->getReplacement();
         $info[] = $package->getLogo();
-        $info[] = $package->getMetaForLanguage($language);
+        $info[] = $package->getMeta();
 
         return $info;
     }

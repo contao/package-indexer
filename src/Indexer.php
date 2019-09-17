@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * Contao Package Indexer
  *
- * @copyright  Copyright (c) 2018, terminal42 gmbh
+ * @copyright  Copyright (c) 2019, terminal42 gmbh
  * @author     terminal42 gmbh <info@terminal42.ch>
  * @license    MIT
  */
@@ -30,7 +30,7 @@ class Indexer
      */
     public const LANGUAGES = ['en', 'de', 'br', 'cs', 'es', 'fa', 'fr', 'it', 'ja', 'lv', 'nl', 'pl', 'pt', 'ru', 'sr', 'zh'];
     private const CACHE_PREFIX = 'package-indexer';
-    private const INDEX_PREFIX = 'v2_';
+    private const INDEX_PREFIX = 'v3_';
 
     /**
      * @var LoggerInterface
@@ -48,9 +48,9 @@ class Indexer
     private $client;
 
     /**
-     * @var Index[]
+     * @var Index
      */
-    private $indexes;
+    private $index;
 
     /**
      * @var Package[]
@@ -114,29 +114,27 @@ class Indexer
         }
     }
 
-    private function deleteRemovedPackages(bool $dryRun)
+    private function deleteRemovedPackages(bool $dryRun): void
     {
-        foreach ($this->indexes as $language => $index) {
-            $packagesToDeleteFromIndex = [];
+        $packagesToDeleteFromIndex = [];
 
-            foreach ($index->browse('', ['attributesToRetrieve' => ['objectID']]) as $item) {
-                // Check if object still exists in collected packages
-                if (!isset($this->packages[$item['objectID']])) {
-                    $packagesToDeleteFromIndex[] = $item['objectID'];
-                }
+        foreach ($this->index->browse('', ['attributesToRetrieve' => ['objectID']]) as $item) {
+            // Check if object still exists in collected packages
+            if (!isset($this->packages[$item['objectID']])) {
+                $packagesToDeleteFromIndex[] = $item['objectID'];
             }
+        }
 
-            if (0 === \count($packagesToDeleteFromIndex)) {
-                continue;
-            }
+        if (0 === \count($packagesToDeleteFromIndex)) {
+            return;
+        }
 
-            if (!$dryRun) {
-                foreach ($packagesToDeleteFromIndex as $objectID) {
-                    $index->deleteObject($objectID);
-                }
-            } else {
-                $this->logger->debug(sprintf('Objects to delete from index for language "%s": %s', $language, json_encode($packagesToDeleteFromIndex)));
+        if (!$dryRun) {
+            foreach ($packagesToDeleteFromIndex as $objectID) {
+                $this->index->deleteObject($objectID);
             }
+        } else {
+            $this->logger->debug(sprintf('Objects to delete from index: %s', json_encode($packagesToDeleteFromIndex)));
         }
     }
 
@@ -172,9 +170,8 @@ class Indexer
     {
         $publicPackages = array_keys($this->packages);
         $availablePackages = $this->metaDataRepository->getPackageNames();
-        $privatePackages = array_diff($availablePackages, $publicPackages);
 
-        foreach ($privatePackages as $packageName) {
+        foreach (array_diff($availablePackages, $publicPackages) as $packageName) {
             $this->packages[$packageName] = $this->packageFactory->createPrivate($packageName);
         }
     }
@@ -185,82 +182,74 @@ class Indexer
             return;
         }
 
-        $this->createIndexes($clearIndex);
-        $packagesPerLanguage = [];
+        $this->createIndex($clearIndex);
+        $packages = [];
 
-        foreach (self::LANGUAGES as $language) {
-            if (!isset($packagesPerLanguage[$language])) {
-                $packagesPerLanguage[$language] = [];
+        // Ignore the ones that do not need any update
+        foreach ($this->packages as $packageName => $package) {
+            $hash = self::CACHE_PREFIX.'-'.$this->packageHashGenerator->getHash($package);
+
+            $cacheItem = $this->cacheItemPool->getItem($hash);
+
+            if (!$ignoreCache) {
+                if (!$cacheItem->isHit()) {
+                    $hitMsg = 'miss';
+                    $cacheItem->set(true);
+                    $this->cacheItemPool->saveDeferred($cacheItem);
+                    $packages[] = $package;
+                } else {
+                    $hitMsg = 'hit';
+                }
+            } else {
+                $packages[] = $package;
+                $hitMsg = 'ignored';
             }
 
-            // Ignore the ones that do not need any update
-            foreach ($this->packages as $packageName => $package) {
-                $hash = self::CACHE_PREFIX.'-'.
-                    $language.'-'.
-                    $this->packageHashGenerator->getHash($package, $language);
-
-                $cacheItem = $this->cacheItemPool->getItem($hash);
-
-                if (!$ignoreCache) {
-                    if (!$cacheItem->isHit()) {
-                        $hitMsg = 'miss';
-                        $cacheItem->set(true);
-                        $this->cacheItemPool->saveDeferred($cacheItem);
-                        $packagesPerLanguage[$language][] = $package;
-                    } else {
-                        $hitMsg = 'hit';
-                    }
-                } else {
-                    $packagesPerLanguage[$language][] = $package;
-                    $hitMsg = 'ignored';
-                }
-
-                $this->logger->debug(sprintf('Cache entry for package "%s" and language "%s" was %s (hash: %s)',
+            $this->logger->debug(sprintf('Cache entry for package "%s" was %s (hash: %s)',
                     $packageName,
-                    $language,
                     $hitMsg,
                     $hash
                 ));
+        }
+
+        foreach (array_chunk($packages, 100) as $chunk) {
+            $objects = [];
+
+            /** @var Package $package */
+            foreach ($chunk as $package) {
+                $languageKeys = array_keys($package->getMeta());
+                // TODO does 'meta' always have an 'en' key?
+                foreach ($languageKeys as $language) {
+                    if ('en' === $language) {
+                        $allLanguages = array_merge(['en'], array_diff(self::LANGUAGES, $languageKeys));
+                    }
+
+                    $objects[] = $package->getForAlgolia($language, $allLanguages ?? null);
+                }
+            }
+
+            if (!$dryRun) {
+                $this->index->saveObjects($objects, 'name');
+            } else {
+                $this->logger->debug(sprintf('Objects to index: %s', json_encode($objects)));
             }
         }
 
-        foreach ($packagesPerLanguage as $language => $packages) {
-            foreach (array_chunk($packages, 100) as $chunk) {
-                $objects = [];
-
-                /** @var Package $package */
-                foreach ($chunk as $package) {
-                    $objects[] = $package->getForAlgolia($language);
-                }
-
-                if (!$dryRun) {
-                    $this->indexes[$language]->saveObjects($objects, 'name');
-                } else {
-                    $this->logger->debug(sprintf('Objects to index for language "%s": %s', $language, json_encode($objects)));
-                }
-            }
-
-            $this->logger->info(sprintf('Updated "%s" package(s) for language "%s".',
-                \count($packages),
-                $language)
-            );
-        }
+        $this->logger->info(sprintf('Updated "%s" package(s).', \count($packages)));
 
         $this->cacheItemPool->commit();
     }
 
-    private function createIndexes(bool $clearIndex): void
+    private function createIndex(bool $clearIndex): void
     {
-        if (null === $this->indexes) {
-            foreach (self::LANGUAGES as $language) {
-                try {
-                    $this->indexes[$language] = $this->client->initIndex(self::INDEX_PREFIX.$language);
+        if (null === $this->index) {
+            try {
+                $this->index = $this->client->initIndex(self::INDEX_PREFIX.'packages');
 
-                    if ($clearIndex) {
-                        $this->indexes[$language]->clearIndex();
-                    }
-                } catch (AlgoliaException $e) {
+                if ($clearIndex) {
+                    $this->index->clearIndex();
                 }
+            } catch (AlgoliaException $e) {
             }
         }
     }

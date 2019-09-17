@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * Contao Package Indexer
  *
- * @copyright  Copyright (c) 2018, terminal42 gmbh
+ * @copyright  Copyright (c) 2019, terminal42 gmbh
  * @author     terminal42 gmbh <info@terminal42.ch>
  * @license    MIT
  */
@@ -312,7 +312,7 @@ class Package
         return $this;
     }
 
-    public function getForAlgolia(string $language): array
+    public function getForAlgolia(string $language, ?array $allLanguages): array
     {
         $data = [
             'name' => $this->getName(),
@@ -330,6 +330,7 @@ class Package
             'private' => $this->isPrivate(),
             'replacement' => $this->getReplacement(),
             'logo' => $this->getLogo(),
+            'languages' => $allLanguages ?? [$language],
         ];
 
         // Language specific

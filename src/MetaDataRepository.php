@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * Contao Package Indexer
  *
- * @copyright  Copyright (c) 2018, terminal42 gmbh
+ * @copyright  Copyright (c) 2019, terminal42 gmbh
  * @author     terminal42 gmbh <info@terminal42.ch>
  * @license    MIT
  */
@@ -98,7 +98,7 @@ class MetaDataRepository
 
         try {
             $data = Yaml::parseFile($file);
-            $data = (array_key_exists($language, $data) && \is_array($data[$language])) ? $data[$language] : [];
+            $data = (\array_key_exists($language, $data) && \is_array($data[$language])) ? $data[$language] : [];
 
             return $this->filterMetadata($data);
         } catch (ParseException $e) {
