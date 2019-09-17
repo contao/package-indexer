@@ -19,7 +19,7 @@ class MetaAwarePackageHashGenerator extends PackageHashGenerator
     protected function getHashRelevantInfo(Package $package, string $language): array
     {
         $info = parent::getHashRelevantInfo($package, $language);
-        $info[] = $package->getStars();
+        $info[] = $package->getFavers();
         $info[] = $package->getDownloads();
 
         return $info;

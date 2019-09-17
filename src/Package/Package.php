@@ -62,7 +62,7 @@ class Package
     /**
      * @var int
      */
-    private $stars = 0;
+    private $favers = 0;
 
     /**
      * @var bool
@@ -205,14 +205,14 @@ class Package
         return $this;
     }
 
-    public function getStars(): int
+    public function getFavers(): int
     {
-        return $this->stars;
+        return $this->favers;
     }
 
-    public function setStars(int $stars): self
+    public function setFavers(int $favers): self
     {
-        $this->stars = $stars;
+        $this->favers = $favers;
 
         return $this;
     }
@@ -323,7 +323,7 @@ class Package
             'support' => $this->getSupport(),
             'license' => $this->getLicense(),
             'downloads' => $this->getDownloads(),
-            'stars' => $this->getStars(),
+            'favers' => $this->getFavers(),
             'supported' => $this->isSupported(),
             'managed' => $this->isManaged(),
             'abandoned' => $this->isAbandoned(),
@@ -334,9 +334,7 @@ class Package
         ];
 
         // Language specific
-        $meta = $this->getMetaForLanguage($language);
-
-        foreach ($meta as $k => $v) {
+        foreach ($this->getMetaForLanguage($language) as $k => $v) {
             if (isset($data[$k])) {
                 $data[$k] = $v;
             }

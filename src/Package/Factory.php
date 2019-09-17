@@ -144,7 +144,7 @@ class Factory
         $package->setVersions($versions);
         $package->setLicense($latest['license'] ?? []);
         $package->setDownloads((int) ($data['packages']['downloads']['total'] ?? 0));
-        $package->setStars((int) ($data['packages']['favers'] ?? 0));
+        $package->setFavers((int) ($data['packages']['favers'] ?? 0));
         $package->setSupported($this->isSupported($data['packages']['versions']));
         $package->setManaged($this->isManaged($data['packages']['versions']));
         $package->setAbandoned(isset($data['packages']['abandoned']));
