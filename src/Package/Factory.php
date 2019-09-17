@@ -124,7 +124,7 @@ class Factory
         return $package;
     }
 
-    private function setBasicDataFromPackagist(array $data, Package $package)
+    private function setBasicDataFromPackagist(array $data, Package $package): void
     {
         $versions = [];
 
@@ -145,6 +145,8 @@ class Factory
         $package->setLicense($latest['license'] ?? []);
         $package->setDownloads((int) ($data['packages']['downloads']['total'] ?? 0));
         $package->setFavers((int) ($data['packages']['favers'] ?? 0));
+        $package->setReleased($data['packages']['time'] ?? '');
+        $package->setUpdated($latest['time'] ?? '');
         $package->setSupported($this->isSupported($data['packages']['versions']));
         $package->setManaged($this->isManaged($data['packages']['versions']));
         $package->setAbandoned(isset($data['packages']['abandoned']));

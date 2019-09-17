@@ -65,6 +65,16 @@ class Package
     private $favers = 0;
 
     /**
+     * @var string
+     */
+    private $released = '';
+
+    /**
+     * @var string
+     */
+    private $updated = '';
+
+    /**
      * @var bool
      */
     private $supported = false;
@@ -217,6 +227,30 @@ class Package
         return $this;
     }
 
+    public function getReleased(): string
+    {
+        return $this->released;
+    }
+
+    public function setReleased(string $released): self
+    {
+        $this->released = $released;
+
+        return $this;
+    }
+
+    public function getUpdated(): string
+    {
+        return $this->updated;
+    }
+
+    public function setUpdated(string $updated): self
+    {
+        $this->updated = $updated;
+
+        return $this;
+    }
+
     public function isSupported(): bool
     {
         return $this->supported;
@@ -324,6 +358,8 @@ class Package
             'license' => $this->getLicense(),
             'downloads' => $this->getDownloads(),
             'favers' => $this->getFavers(),
+            'released' => $this->getReleased(),
+            'updated' => $this->getUpdated(),
             'supported' => $this->isSupported(),
             'managed' => $this->isManaged(),
             'abandoned' => $this->isAbandoned(),
