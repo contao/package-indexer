@@ -222,8 +222,7 @@ class Indexer
 
             /** @var Package $package */
             foreach ($chunk as $package) {
-                $languageKeys = array_keys($package->getMeta());
-                // TODO does 'meta' always have an 'en' key?
+                $languageKeys = array_keys($package->getMeta()) ?: ['en'];
                 foreach ($languageKeys as $language) {
                     if ('en' === $language) {
                         $allLanguages = array_merge(['en'], array_diff(self::LANGUAGES, $languageKeys));

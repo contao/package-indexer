@@ -16,9 +16,9 @@ use App\Package\Package;
 
 class MetaAwarePackageHashGenerator extends PackageHashGenerator
 {
-    protected function getHashRelevantInfo(Package $package, string $language): array
+    protected function getHashRelevantInfo(Package $package): array
     {
-        $info = parent::getHashRelevantInfo($package, $language);
+        $info = parent::getHashRelevantInfo($package);
         $info[] = $package->getFavers();
         $info[] = $package->getDownloads();
 
