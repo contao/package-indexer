@@ -234,7 +234,7 @@ class Indexer
             }
 
             if (!$dryRun) {
-                $this->index->saveObjects($objects, 'name');
+                $this->index->saveObjects($objects);
             } else {
                 $this->logger->debug(sprintf('Objects to index: %s', json_encode($objects)));
             }

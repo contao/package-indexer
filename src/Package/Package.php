@@ -366,6 +366,7 @@ class Package
     public function getForAlgolia(string $language, ?array $allLanguages): array
     {
         $data = [
+            'objectID' => $this->getName().('en' !== $language ? '/'.$language : ''),
             'name' => $this->getName(),
             'title' => $this->getName(),
             'description' => $this->getDescription(),
