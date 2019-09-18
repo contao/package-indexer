@@ -161,9 +161,7 @@ class Factory
     private function isSupported(array $versionsData): bool
     {
         foreach ($versionsData as $version => $versionData) {
-            if (isset($versionData['require']['contao/core-bundle'])
-                || 'contao-component' === $versionData['type']
-            ) {
+            if ('contao-component' === $versionData['type'] || isset($versionData['require']['contao/core-bundle'])) {
                 return true;
             }
         }
