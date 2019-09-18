@@ -377,8 +377,6 @@ class Package
             'favers' => $this->getFavers(),
             'released' => $this->getReleased(),
             'updated' => $this->getUpdated(),
-            'supported' => $this->isSupported(),
-            'managed' => $this->isManaged(),
             'abandoned' => $this->isAbandoned(),
             'private' => $this->isPrivate(),
             'replacement' => $this->getReplacement(),
