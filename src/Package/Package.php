@@ -391,8 +391,8 @@ class Package
             if (isset($data[$k])) {
                 if (\is_array($data[$k]) && array_keys($data[$k]) !== range(0, \count($data[$k]) - 1)) {
                     // Support associative arrays, as for example the "suggest" metadata.
-                    // This supports partial translations and keeps original data if the translated metadata lacks translations.
-                    foreach ($data[$k] as $kk => $vv) {
+                    // This supports partial translations and keeps original data if the metadata lacks translations.
+                    foreach ($v[$k] as $kk => $vv) {
                         $data[$k][$kk] = $vv;
                     }
                     continue;
