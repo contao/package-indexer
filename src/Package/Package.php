@@ -366,7 +366,7 @@ class Package
     public function getForAlgolia(string $language, ?array $allLanguages): array
     {
         $data = [
-            'objectID' => $this->getName().('en' !== $language ? '/'.$language : ''),
+            'objectID' => $this->getName().'/'.$language,
             'name' => $this->getName(),
             'title' => $this->getName(),
             'description' => $this->getDescription(),
@@ -389,7 +389,7 @@ class Package
         // Language specific
         foreach ($this->getMetaForLanguage($language) as $k => $v) {
             if (isset($data[$k])) {
-                if (\is_array($data[$k]) && array_keys($data[$k]) !== range(0, \count($data[$k]) - 1)) {
+                if (isset($v[$k]) && \is_array($v[$k]) && array_keys($v[$k]) !== range(0, \count($v[$k]) - 1)) {
                     // Support associative arrays, as for example the "suggest" metadata.
                     // This supports partial translations and keeps original data if the metadata lacks translations.
                     foreach ($v[$k] as $kk => $vv) {
