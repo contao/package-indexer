@@ -128,7 +128,7 @@ class Factory
     {
         $versions = [];
 
-        $latest = end($data['p']);
+        $latest = $this->findLatestVersion($data['p']);
 
         foreach ($data['packages']['versions'] as $version => $versionData) {
             $versions[] = $version;
@@ -189,5 +189,29 @@ class Factory
         }
 
         $package->setMeta($meta);
+    }
+
+    private function findLatestVersion(array $versions)
+    {
+        $latest = array_reduce(
+            array_keys($versions),
+            function (?string $prev, string $curr) use ($versions) {
+                if (null === $prev) {
+                    return $curr;
+                }
+
+                if (strpos($curr, 'dev-') === 0 && strpos($prev, 'dev-') !== 0) {
+                    return $prev;
+                }
+
+                if (strpos($prev, 'dev-') === 0 && strpos($curr, 'dev-') !== 0) {
+                    return $curr;
+                }
+
+                return strtotime($versions[$prev]['time']) > strtotime($versions[$curr]['time']) ? $prev : $curr;
+            }
+        );
+
+        return $versions[$latest];
     }
 }
