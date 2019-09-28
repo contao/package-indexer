@@ -200,11 +200,17 @@ class Factory
                     return $curr;
                 }
 
-                if (strpos($curr, 'dev-') === 0 && strpos($prev, 'dev-') !== 0) {
+                if ((strpos($curr, 'dev-') === 0 || substr($curr, -4) === '-dev')
+                    && strpos($prev, 'dev-') !== 0
+                    && substr($prev, -4) !== '-dev'
+                ) {
                     return $prev;
                 }
 
-                if (strpos($prev, 'dev-') === 0 && strpos($curr, 'dev-') !== 0) {
+                if ((strpos($prev, 'dev-') === 0 || substr($prev, -4) === '-dev')
+                    && strpos($curr, 'dev-') !== 0
+                    && substr($curr, -4) !== '-dev'
+                ) {
                     return $curr;
                 }
 
