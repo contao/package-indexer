@@ -80,6 +80,11 @@ class Package
     private $supported = false;
 
     /**
+     * @var bool
+     */
+    private $discoverable = true;
+
+    /**
      * @var string|bool
      */
     private $abandoned = '';
@@ -258,6 +263,18 @@ class Package
         return $this;
     }
 
+    public function isDiscoverable(): bool
+    {
+        return $this->discoverable;
+    }
+
+    public function setDiscoverable(bool $discoverable): self
+    {
+        $this->discoverable = $discoverable;
+
+        return $this;
+    }
+
     public function getAbandoned()
     {
         return $this->abandoned;
@@ -345,6 +362,7 @@ class Package
             'released' => $this->getReleased(),
             'updated' => $this->getUpdated(),
             'supported' => $this->isSupported(),
+            'discoverable' => $this->isDiscoverable(),
             'abandoned' => $this->getAbandoned(),
             'private' => $this->isPrivate(),
             'suggest' => $this->getSuggest(),
