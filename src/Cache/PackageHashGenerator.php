@@ -34,7 +34,6 @@ class PackageHashGenerator
         $info[] = $package->isSupported();
         $info[] = $package->getAbandoned();
         $info[] = $package->isPrivate();
-        $info[] = $package->getReplacement();
         $info[] = $package->getLogo();
         $info[] = $package->getMeta();
 

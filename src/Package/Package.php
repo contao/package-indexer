@@ -80,19 +80,14 @@ class Package
     private $supported = false;
 
     /**
-     * @var bool
+     * @var string|bool
      */
-    private $abandoned = false;
+    private $abandoned = '';
 
     /**
      * @var bool
      */
     private $private = false;
-
-    /**
-     * @var string
-     */
-    private $replacement = '';
 
     /**
      * @var array
@@ -263,12 +258,12 @@ class Package
         return $this;
     }
 
-    public function isAbandoned(): bool
+    public function getAbandoned()
     {
         return $this->abandoned;
     }
 
-    public function setAbandoned(bool $abandoned): self
+    public function setAbandoned($abandoned): self
     {
         $this->abandoned = $abandoned;
 
@@ -283,18 +278,6 @@ class Package
     public function setPrivate(bool $private): self
     {
         $this->private = $private;
-
-        return $this;
-    }
-
-    public function getReplacement(): string
-    {
-        return $this->replacement;
-    }
-
-    public function setReplacement(string $replacement): self
-    {
-        $this->replacement = $replacement;
 
         return $this;
     }
@@ -362,9 +345,8 @@ class Package
             'released' => $this->getReleased(),
             'updated' => $this->getUpdated(),
             'supported' => $this->isSupported(),
-            'abandoned' => $this->isAbandoned(),
+            'abandoned' => $this->getAbandoned(),
             'private' => $this->isPrivate(),
-            'replacement' => $this->getReplacement(),
             'suggest' => $this->getSuggest(),
             'logo' => $this->getLogo(),
             'languages' => $allLanguages ?? [$language],

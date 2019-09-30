@@ -143,8 +143,7 @@ class Factory
         $package->setReleased($data['packages']['time'] ?? '');
         $package->setUpdated($latest['time'] ?? '');
         $package->setSupported($this->isSupported($data['packages']['versions']));
-        $package->setAbandoned(isset($data['packages']['abandoned']));
-        $package->setReplacement($data['packages']['replacement'] ?? '');
+        $package->setAbandoned($data['packages']['abandoned'] ?? false);
         $package->setSuggest($latest['suggest'] ?? []);
         $package->setPrivate(false);
 
