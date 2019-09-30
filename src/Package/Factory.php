@@ -98,10 +98,6 @@ class Factory
             if (!$package->isSupported() && $reqPackage->isSupported()) {
                 $package->setSupported(true);
             }
-
-            if (!$package->isManaged() && $reqPackage->isManaged()) {
-                $package->setManaged(true);
-            }
         }
 
         $package->setRequiredPackagesAccrossVersions($requires);
@@ -114,7 +110,6 @@ class Factory
         $package = new Package($name);
         $package->setTitle($name);
         $package->setSupported(true);
-        $package->setManaged(true);
         $package->setLicense(['proprietary']);
         $package->setPrivate(true);
 
@@ -148,7 +143,6 @@ class Factory
         $package->setReleased($data['packages']['time'] ?? '');
         $package->setUpdated($latest['time'] ?? '');
         $package->setSupported($this->isSupported($data['packages']['versions']));
-        $package->setManaged($this->isManaged($data['packages']['versions']));
         $package->setAbandoned(isset($data['packages']['abandoned']));
         $package->setReplacement($data['packages']['replacement'] ?? '');
         $package->setSuggest($latest['suggest'] ?? []);
@@ -161,18 +155,8 @@ class Factory
     private function isSupported(array $versionsData): bool
     {
         foreach ($versionsData as $version => $versionData) {
-            if ('contao-component' === $versionData['type'] || isset($versionData['require']['contao/core-bundle'])) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function isManaged(array $versionsData): bool
-    {
-        foreach ($versionsData as $version => $versionData) {
-            if ('contao-bundle' !== $versionData['type'] || isset($versionData['extra']['contao-manager-plugin'])) {
+            if (isset($versionData['require']['contao/core-bundle'], $versionData['extra']['contao-manager-plugin'])
+                || 'contao-component' === $versionData['type']) {
                 return true;
             }
         }
@@ -195,21 +179,21 @@ class Factory
     {
         $latest = array_reduce(
             array_keys($versions),
-            function (?string $prev, string $curr) use ($versions) {
+            static function (?string $prev, string $curr) use ($versions) {
                 if (null === $prev) {
                     return $curr;
                 }
 
-                if ((strpos($curr, 'dev-') === 0 || substr($curr, -4) === '-dev')
-                    && strpos($prev, 'dev-') !== 0
-                    && substr($prev, -4) !== '-dev'
+                if ('-dev' !== substr($prev, -4)
+                    && 0 !== strpos($prev, 'dev-')
+                    && (0 === strpos($curr, 'dev-') || '-dev' === substr($curr, -4))
                 ) {
                     return $prev;
                 }
 
-                if ((strpos($prev, 'dev-') === 0 || substr($prev, -4) === '-dev')
-                    && strpos($curr, 'dev-') !== 0
-                    && substr($curr, -4) !== '-dev'
+                if ('-dev' !== substr($curr, -4)
+                    && 0 !== strpos($curr, 'dev-')
+                    && (0 === strpos($prev, 'dev-') || '-dev' === substr($prev, -4))
                 ) {
                     return $curr;
                 }

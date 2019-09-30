@@ -82,11 +82,6 @@ class Package
     /**
      * @var bool
      */
-    private $managed = false;
-
-    /**
-     * @var bool
-     */
     private $abandoned = false;
 
     /**
@@ -268,18 +263,6 @@ class Package
         return $this;
     }
 
-    public function isManaged(): bool
-    {
-        return $this->managed;
-    }
-
-    public function setManaged(bool $managed): self
-    {
-        $this->managed = $managed;
-
-        return $this;
-    }
-
     public function isAbandoned(): bool
     {
         return $this->abandoned;
@@ -378,6 +361,7 @@ class Package
             'favers' => $this->getFavers(),
             'released' => $this->getReleased(),
             'updated' => $this->getUpdated(),
+            'supported' => $this->isSupported(),
             'abandoned' => $this->isAbandoned(),
             'private' => $this->isPrivate(),
             'replacement' => $this->getReplacement(),
