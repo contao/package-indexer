@@ -82,7 +82,7 @@ class Package
     /**
      * @var bool
      */
-    private $discoverable = true;
+    private $dependency = false;
 
     /**
      * @var string|bool
@@ -263,14 +263,14 @@ class Package
         return $this;
     }
 
-    public function isDiscoverable(): bool
+    public function isDependency(): bool
     {
-        return $this->discoverable;
+        return $this->dependency;
     }
 
-    public function setDiscoverable(bool $discoverable): self
+    public function setDependency(bool $dependency): self
     {
-        $this->discoverable = $discoverable;
+        $this->dependency = $dependency;
 
         return $this;
     }
@@ -361,8 +361,7 @@ class Package
             'favers' => $this->getFavers(),
             'released' => $this->getReleased(),
             'updated' => $this->getUpdated(),
-            'supported' => $this->isSupported(),
-            'discoverable' => $this->isDiscoverable(),
+            'dependency' => $this->isDependency(),
             'abandoned' => $this->getAbandoned(),
             'private' => $this->isPrivate(),
             'suggest' => $this->getSuggest(),
