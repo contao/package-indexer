@@ -118,6 +118,7 @@ class Indexer
     {
         $packagesToDeleteFromIndex = [];
 
+        $this->createIndex(false);
         foreach ($this->index->browse('', ['attributesToRetrieve' => ['objectID']]) as $item) {
             // Check if object still exists in collected packages
             $objectID = $item['objectID'];
@@ -145,7 +146,7 @@ class Indexer
         foreach ($packageNames as $packageName) {
             $package = $this->packageFactory->createBasicFromPackagist($packageName);
 
-            if (null !== $package) {
+            if (null !== $package && $package->isSupported()) {
                 $this->packages[$packageName] = $package;
             }
         }
@@ -189,11 +190,6 @@ class Indexer
 
         // Ignore the ones that do not need any update
         foreach ($this->packages as $packageName => $package) {
-            // Unsupported packages do not belong in the index
-            if (false === $package->isSupported()) {
-                continue;
-            }
-
             $hash = self::CACHE_PREFIX.'-'.$this->packageHashGenerator->getHash($package);
 
             $cacheItem = $this->cacheItemPool->getItem($hash);
