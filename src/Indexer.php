@@ -120,8 +120,10 @@ class Indexer
 
         foreach ($this->index->browse('', ['attributesToRetrieve' => ['objectID']]) as $item) {
             // Check if object still exists in collected packages
-            if (!isset($this->packages[$item['objectID']])) {
-                $packagesToDeleteFromIndex[] = $item['objectID'];
+            $objectID = $item['objectID'];
+            $name = substr($objectID, 0, -3);
+            if (!isset($this->packages[$name])) {
+                $packagesToDeleteFromIndex[] = $objectID;
             }
         }
 
