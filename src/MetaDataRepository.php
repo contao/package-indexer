@@ -100,10 +100,18 @@ class MetaDataRepository
             $data = Yaml::parseFile($file);
             $data = (\array_key_exists($language, $data) && \is_array($data[$language])) ? $data[$language] : [];
 
-            return $this->filterMetadata($data);
+            $data = $this->filterMetadata($data);
+            $data['metadata'] = sprintf(
+                'https://github.com/contao/package-metadata/blob/master/meta/%s/%s.yml',
+                $package->getName(),
+                $language
+            );
+
         } catch (ParseException $e) {
-            return [];
+            $data = [];
         }
+
+        return $data;
     }
 
     private function filterMetadata(array $data): array

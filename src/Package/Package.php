@@ -346,8 +346,10 @@ class Package
         return $this;
     }
 
-    public function getForAlgolia(string $language, ?array $allLanguages): array
+    public function getForAlgolia(array $languages): array
     {
+        $language = reset($languages);
+
         $data = [
             'objectID' => $this->getName().'/'.$language,
             'name' => $this->getName(),
@@ -366,7 +368,7 @@ class Package
             'private' => $this->isPrivate(),
             'suggest' => $this->getSuggest(),
             'logo' => $this->getLogo(),
-            'languages' => $allLanguages ?? [$language],
+            'languages' => $languages,
         ];
 
         $data = array_replace_recursive($data, $this->getMetaForLanguage($language));

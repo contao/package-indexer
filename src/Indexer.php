@@ -212,13 +212,15 @@ class Indexer
             /** @var Package $package */
             foreach ($chunk as $package) {
                 $languageKeys = array_unique(array_merge(['en'], array_keys(array_filter($package->getMeta()))));
+
                 foreach ($languageKeys as $language) {
-                    $allLanguages = null;
+                    $languages = [$language];
+
                     if ('en' === $language) {
-                        $allLanguages = array_merge(['en'], array_diff(self::LANGUAGES, $languageKeys));
+                        $languages = array_merge(['en'], array_diff(self::LANGUAGES, $languageKeys));
                     }
 
-                    $objects[] = $package->getForAlgolia($language, $allLanguages);
+                    $objects[] = $package->getForAlgolia($languages);
                 }
             }
 
