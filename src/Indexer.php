@@ -105,8 +105,7 @@ class Indexer
         $this->collectPackages($packageNames);
 
         if (null === $package) {
-            $this->collectMetapackages();
-            $this->collectPrivatePackages();
+            $this->collectAdditionalPackages();
         }
 
         $this->indexPackages($dryRun, $ignoreCache, $clearIndex);
@@ -147,7 +146,7 @@ class Indexer
     private function collectPackages(array $packageNames): void
     {
         foreach ($packageNames as $packageName) {
-            $package = $this->packageFactory->createBasicFromPackagist($packageName);
+            $package = $this->packageFactory->create($packageName);
 
             if (null === $package || !$package->isSupported()) {
                 $this->logger->debug($packageName.' is not supported.');
@@ -159,30 +158,15 @@ class Indexer
         }
     }
 
-    private function collectMetapackages(): void
-    {
-        $packages = array_keys($this->packages);
-
-        foreach ($this->packagist->getPackageNames('metapackage') as $packageName) {
-            $metaPackage = $this->packageFactory->createMetaFromPackagist($packageName);
-
-            if (null === $metaPackage) {
-                continue;
-            }
-
-            if ($metaPackage->requiresOneOf($packages)) {
-                $this->packages[$packageName] = $metaPackage;
-            }
-        }
-    }
-
-    private function collectPrivatePackages(): void
+    private function collectAdditionalPackages(): void
     {
         $publicPackages = array_keys($this->packages);
         $availablePackages = $this->metaDataRepository->getPackageNames();
 
-        foreach (array_diff($availablePackages, $publicPackages) as $packageName) {
-            $this->packages[$packageName] = $this->packageFactory->createPrivate($packageName);
+        $additionalPackages = array_diff($availablePackages, $publicPackages);
+
+        if (0 !== \count($additionalPackages)) {
+            $this->collectPackages($additionalPackages);
         }
     }
 

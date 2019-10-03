@@ -39,7 +39,7 @@ class Factory
         $this->packagist = $packagist;
     }
 
-    public function createBasicFromPackagist(string $name): ?Package
+    public function create(string $name): Package
     {
         $cacheKey = 'basic-'.$name;
         if (isset($this->cache[$cacheKey])) {
@@ -49,63 +49,16 @@ class Factory
         $data = $this->packagist->getPackageData($name);
 
         if (0 === \count($data)) {
-            return null;
+            $package = $this->createPrivate($name);
+        } else {
+            $package = new Package($data['packages']['name']);
+            $this->setBasicDataFromPackagist($data, $package);
         }
-
-        $package = new Package($data['packages']['name']);
-        $this->setBasicDataFromPackagist($data, $package);
 
         return $this->cache[$cacheKey] = $package;
     }
 
-    public function createMetaFromPackagist(string $name): ?MetaPackage
-    {
-        $cacheKey = 'meta-'.$name;
-        if (isset($this->cache[$cacheKey])) {
-            return $this->cache[$cacheKey];
-        }
-
-        $data = $this->packagist->getPackageData($name);
-
-        if (0 === \count($data)) {
-            return null;
-        }
-
-        $package = new MetaPackage($data['packages']['name']);
-        $this->setBasicDataFromPackagist($data, $package);
-
-        $requires = [];
-
-        foreach ($data['packages']['versions'] as $version) {
-            if (!isset($version['require'])) {
-                continue;
-            }
-
-            foreach (array_keys($version['require']) as $require) {
-                $requires[$require] = true;
-            }
-        }
-
-        $requires = array_keys($requires);
-
-        foreach ($requires as $require) {
-            $reqPackage = $this->createBasicFromPackagist($require);
-
-            if (null === $reqPackage) {
-                continue;
-            }
-
-            if (!$package->isSupported() && $reqPackage->isSupported()) {
-                $package->setSupported(true);
-            }
-        }
-
-        $package->setRequiredPackagesAccrossVersions($requires);
-
-        return $this->cache[$cacheKey] = $package;
-    }
-
-    public function createPrivate(string $name): Package
+    private function createPrivate(string $name): Package
     {
         $package = new Package($name);
         $package->setTitle($name);
