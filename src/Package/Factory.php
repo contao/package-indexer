@@ -74,8 +74,8 @@ class Factory
 
     private function setBasicDataFromPackagist(array $data, Package $package): void
     {
+        $latest = $this->findLatestVersion($data['p']);
         $versions = array_keys($data['packages']['versions']);
-        $latest = $this->findLatestVersion($data['packages']['versions']);
 
         sort($versions);
 
