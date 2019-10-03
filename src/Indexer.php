@@ -30,7 +30,7 @@ class Indexer
      */
     public const LANGUAGES = ['en', 'de', 'br', 'cs', 'es', 'fa', 'fr', 'it', 'ja', 'lv', 'nl', 'pl', 'pt', 'ru', 'sr', 'zh'];
     private const CACHE_PREFIX = 'package-indexer';
-    private const INDEX_PREFIX = 'v3_';
+    private const INDEX_NAME = 'v3_packages';
 
     /**
      * @var LoggerInterface
@@ -247,7 +247,7 @@ class Indexer
     {
         if (null === $this->index) {
             try {
-                $this->index = $this->client->initIndex(self::INDEX_PREFIX.'packages');
+                $this->index = $this->client->initIndex(self::INDEX_NAME);
 
                 if ($clearIndex) {
                     $this->index->clearIndex();
