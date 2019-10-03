@@ -138,7 +138,7 @@
         }
     },
     "symfony/debug": {
-        "version": "v4.1.1"
+        "version": "v4.3.4"
     },
     "symfony/debug-bundle": {
         "version": "4.1",
