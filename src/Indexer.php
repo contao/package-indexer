@@ -149,9 +149,13 @@ class Indexer
         foreach ($packageNames as $packageName) {
             $package = $this->packageFactory->createBasicFromPackagist($packageName);
 
-            if (null !== $package && $package->isSupported()) {
-                $this->packages[$packageName] = $package;
+            if (null === $package || !$package->isSupported()) {
+                $this->logger->debug($packageName.' is not supported.');
+                continue;
             }
+
+            $this->packages[$packageName] = $package;
+            $this->logger->debug('Added '.$packageName);
         }
     }
 
