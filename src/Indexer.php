@@ -103,13 +103,16 @@ class Indexer
         }
 
         $this->collectPackages($packageNames);
-        $this->collectMetapackages();
-        $this->collectPrivatePackages();
+
+        if (null === $package) {
+            $this->collectMetapackages();
+            $this->collectPrivatePackages();
+        }
 
         $this->indexPackages($dryRun, $ignoreCache, $clearIndex);
 
         // If the index was not cleared completely, delete old/removed packages
-        if (!$clearIndex) {
+        if (!$clearIndex && null === $package) {
             $this->deleteRemovedPackages($dryRun);
         }
     }
