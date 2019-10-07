@@ -76,6 +76,8 @@ class Factory
     {
         $latest = $this->findLatestVersion($data['p']);
         $versions = array_keys($data['packages']['versions']);
+        // $data['p'] contains the non-cached data, while only $data['packages'] has the "support" metadata
+        $latestPackages = $this->findLatestVersion($data['packages']['versions']);
 
         sort($versions);
 
@@ -83,7 +85,7 @@ class Factory
         $package->setDescription($latest['description'] ?? '');
         $package->setKeywords($latest['keywords'] ?? []);
         $package->setHomepage($latest['homepage'] ?? '');
-        $package->setSupport($latest['support'] ?? []);
+        $package->setSupport($latestPackages['support'] ?? []);
         $package->setVersions($versions);
         $package->setLicense($latest['license'] ?? []);
         $package->setDownloads((int) ($data['packages']['downloads']['total'] ?? 0));
