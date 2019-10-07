@@ -22,27 +22,27 @@ class Package
     /**
      * @var string
      */
-    private $title = '';
+    private $title;
 
     /**
      * @var string
      */
-    private $description = '';
+    private $description;
 
     /**
      * @var array
      */
-    private $keywords = [];
+    private $keywords;
 
     /**
      * @var string
      */
-    private $homepage = '';
+    private $homepage;
 
     /**
      * @var array
      */
-    private $support = [];
+    private $support;
 
     /**
      * @var array
@@ -52,7 +52,7 @@ class Package
     /**
      * @var array
      */
-    private $license = [];
+    private $license;
 
     /**
      * @var int
@@ -67,12 +67,12 @@ class Package
     /**
      * @var string
      */
-    private $released = '';
+    private $released;
 
     /**
      * @var string
      */
-    private $updated = '';
+    private $updated;
 
     /**
      * @var bool
@@ -87,7 +87,7 @@ class Package
     /**
      * @var string|bool
      */
-    private $abandoned = '';
+    private $abandoned = false;
 
     /**
      * @var bool
@@ -95,14 +95,14 @@ class Package
     private $private = false;
 
     /**
-     * @var array
+     * @var array|null
      */
-    private $suggest = [];
+    private $suggest;
 
     /**
      * @var string
      */
-    private $logo = '';
+    private $logo;
 
     /**
      * @var array
@@ -121,58 +121,58 @@ class Package
 
     public function getTitle(): string
     {
-        return $this->title;
+        return $this->title ?: $this->name;
     }
 
-    public function setTitle(string $title): self
+    public function setTitle(?string $title): self
     {
         $this->title = $title;
 
         return $this;
     }
 
-    public function getDescription(): string
+    public function getDescription(): ?string
     {
         return $this->description;
     }
 
-    public function setDescription(string $description): self
+    public function setDescription(?string $description): self
     {
         $this->description = $description;
 
         return $this;
     }
 
-    public function getKeywords(): array
+    public function getKeywords(): ?array
     {
         return $this->keywords;
     }
 
-    public function setKeywords(array $keywords): self
+    public function setKeywords(?array $keywords): self
     {
         $this->keywords = $keywords;
 
         return $this;
     }
 
-    public function getHomepage(): string
+    public function getHomepage(): ?string
     {
         return $this->homepage;
     }
 
-    public function setHomepage(string $homepage): self
+    public function setHomepage(?string $homepage): self
     {
         $this->homepage = $homepage;
 
         return $this;
     }
 
-    public function getSupport(): array
+    public function getSupport(): ?array
     {
         return $this->support;
     }
 
-    public function setSupport(array $support): self
+    public function setSupport(?array $support): self
     {
         $this->support = $support;
 
@@ -191,12 +191,12 @@ class Package
         return $this;
     }
 
-    public function getLicense(): array
+    public function getLicense(): ?array
     {
         return $this->license;
     }
 
-    public function setLicense(array $license): self
+    public function setLicense(?array $license): self
     {
         $this->license = $license;
 
@@ -227,24 +227,24 @@ class Package
         return $this;
     }
 
-    public function getReleased(): string
+    public function getReleased(): ?string
     {
         return $this->released;
     }
 
-    public function setReleased(string $released): self
+    public function setReleased(?string $released): self
     {
         $this->released = $released;
 
         return $this;
     }
 
-    public function getUpdated(): string
+    public function getUpdated(): ?string
     {
         return $this->updated;
     }
 
-    public function setUpdated(string $updated): self
+    public function setUpdated(?string $updated): self
     {
         $this->updated = $updated;
 
@@ -275,6 +275,9 @@ class Package
         return $this;
     }
 
+    /**
+     * @return bool|string
+     */
     public function getAbandoned()
     {
         return $this->abandoned;
@@ -299,24 +302,24 @@ class Package
         return $this;
     }
 
-    public function getSuggest(): array
+    public function getSuggest(): ?array
     {
         return $this->suggest;
     }
 
-    public function setSuggest(array $suggest): self
+    public function setSuggest(?array $suggest): self
     {
         $this->suggest = $suggest;
 
         return $this;
     }
 
-    public function getLogo(): string
+    public function getLogo(): ?string
     {
         return $this->logo;
     }
 
-    public function setLogo(string $logo): self
+    public function setLogo(?string $logo): self
     {
         $this->logo = $logo;
 
@@ -353,7 +356,7 @@ class Package
         $data = [
             'objectID' => $this->getName().'/'.$language,
             'name' => $this->getName(),
-            'title' => $this->getName(),
+            'title' => $this->getTitle(),
             'description' => $this->getDescription(),
             'keywords' => $this->getKeywords(),
             'homepage' => $this->getHomepage(),
@@ -373,6 +376,8 @@ class Package
 
         $data = array_replace_recursive($data, $this->getMetaForLanguage($language));
 
-        return $data;
+        return array_filter($data, function ($v) {
+            return $v !== null;
+        });
     }
 }

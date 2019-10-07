@@ -82,19 +82,19 @@ class Factory
         sort($versions);
 
         $package->setTitle($package->getName());
-        $package->setDescription($latest['description'] ?? '');
-        $package->setKeywords($latest['keywords'] ?? []);
-        $package->setHomepage($latest['homepage'] ?? '');
-        $package->setSupport($latestPackages['support'] ?? []);
+        $package->setDescription($latest['description'] ?? null);
+        $package->setKeywords($latest['keywords'] ?? null);
+        $package->setHomepage($latest['homepage'] ?? null);
+        $package->setSupport($latestPackages['support'] ?? null);
         $package->setVersions($versions);
-        $package->setLicense($latest['license'] ?? []);
+        $package->setLicense($latest['license'] ?? null);
         $package->setDownloads((int) ($data['packages']['downloads']['total'] ?? 0));
         $package->setFavers((int) ($data['packages']['favers'] ?? 0));
-        $package->setReleased($data['packages']['time'] ?? '');
-        $package->setUpdated($latest['time'] ?? '');
+        $package->setReleased($data['packages']['time'] ?? null);
+        $package->setUpdated($latest['time'] ?? null);
         $package->setSupported($this->isSupported($data['packages']['versions']));
         $package->setAbandoned($data['packages']['abandoned'] ?? false);
-        $package->setSuggest($latest['suggest'] ?? []);
+        $package->setSuggest($latest['suggest'] ?? null);
         $package->setPrivate(false);
 
         $package->setLogo($this->metaData->getLogoForPackage($package));

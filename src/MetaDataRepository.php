@@ -63,7 +63,7 @@ class MetaDataRepository
         return $names;
     }
 
-    public function getLogoForPackage(Package $package): string
+    public function getLogoForPackage(Package $package): ?string
     {
         list($vendor, $name) = explode('/', $package->getName(), 2);
         $image = sprintf('%s/%s/logo.svg', $vendor, $name);
@@ -72,7 +72,7 @@ class MetaDataRepository
             $image = sprintf('%s/logo.svg', $vendor);
 
             if (!$this->fs->exists($this->getMetaDataDir().'/'.$image)) {
-                return '';
+                return null;
             }
         }
 
