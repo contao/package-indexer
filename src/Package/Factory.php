@@ -63,7 +63,6 @@ class Factory
         $package = new Package($name);
         $package->setTitle($name);
         $package->setSupported(true);
-        $package->setLicense(['proprietary']);
         $package->setPrivate(true);
 
         $package->setLogo($this->metaData->getLogoForPackage($package));
