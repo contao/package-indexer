@@ -46,29 +46,41 @@ class Factory
             return $this->cache[$cacheKey];
         }
 
+        $package = new Package($name);
         $data = $this->packagist->getPackageData($name);
 
-        if (0 === \count($data)) {
-            $package = $this->createPrivate($name);
+        if (null === $data) {
+            $this->setDataForPrivate($package);
         } else {
-            $package = new Package($data['packages']['name']);
             $this->setBasicDataFromPackagist($data, $package);
         }
-
-        return $this->cache[$cacheKey] = $package;
-    }
-
-    private function createPrivate(string $name): Package
-    {
-        $package = new Package($name);
-        $package->setTitle($name);
-        $package->setSupported(true);
-        $package->setPrivate(true);
 
         $package->setLogo($this->metaData->getLogoForPackage($package));
         $this->addMeta($package);
 
-        return $package;
+        return $this->cache[$cacheKey] = $package;
+    }
+
+    private function setDataForPrivate(Package $package): void
+    {
+        $package->setSupported(true);
+        $package->setPrivate(true);
+
+        $data = $this->metaData->getComposerJsonForPackage($package);
+
+        if (null === $data) {
+            return;
+        }
+
+        $package->setDescription($data['description'] ?? null);
+        $package->setKeywords($data['keywords'] ?? null);
+        $package->setHomepage($data['homepage'] ?? null);
+        $package->setSupport($data['support'] ?? null);
+        $package->setVersions(isset($data['version']) ? [$data['version']] : []);
+        $package->setLicense(isset($data['license']) ? (array) $data['license'] : null);
+        $package->setReleased($data['time'] ?? null);
+        $package->setUpdated($data['time'] ?? null);
+        $package->setSuggest($data['suggest'] ?? null);
     }
 
     private function setBasicDataFromPackagist(array $data, Package $package): void

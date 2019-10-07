@@ -55,23 +55,23 @@ class Packagist
         return array_diff($data['packageNames'], self::BLACKLIST);
     }
 
-    public function getPackageData(string $name): array
+    public function getPackageData(string $name): ?array
     {
         if (preg_match(self::PLATFORM_PACKAGE_REGEX, $name)) {
-            return [];
+            return null;
         }
 
         try {
             $packagesData = $this->getJson('https://packagist.org/packages/'.$name.'.json');
 
             if (!isset($packagesData['package'])) {
-                return [];
+                return null;
             }
 
             $repoData = $this->getJson('https://repo.packagist.org/p/'.$name.'.json');
 
             if (!isset($repoData['packages'][$name])) {
-                return [];
+                return null;
             }
 
             $data['packages'] = $packagesData['package'];
@@ -79,7 +79,7 @@ class Packagist
         } catch (GuzzleException $e) {
             $this->logger->debug(sprintf('Error fetching package "%s"', $name));
 
-            return [];
+            return null;
         }
 
         return $data;

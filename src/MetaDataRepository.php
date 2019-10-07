@@ -92,6 +92,23 @@ class MetaDataRepository
         return $logo;
     }
 
+    public function getComposerJsonForPackage(Package $package): ?array
+    {
+        $file = $this->getMetaDataDir().'/'.$package->getName().'/composer.json';
+
+        if (!$this->fs->exists($file)) {
+            return null;
+        }
+
+        $data = @json_decode(file_get_contents($file), true);
+
+        if (!\is_array($data)) {
+            return null;
+        }
+
+        return $data;
+    }
+
     public function getMetaDataForPackage(Package $package, string $language): array
     {
         $file = $this->getMetaDataDir().'/'.$package->getName().'/'.$language.'.yml';
