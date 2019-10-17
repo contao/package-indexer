@@ -58,9 +58,13 @@ class Factory
         $package->setLogo($this->metaData->getLogoForPackage($package));
         $this->addMeta($package);
 
-        if (!$package->isSupported() && (!empty($package->getMeta()) || null !== $package->getLogo())) {
-            $package->setSupported(true);
-            $package->setDependency(true);
+        if (!$package->isSupported()) {
+            if (!empty($package->getMeta())) {
+                $package->setSupported(true);
+            } elseif (null !== $package->getLogo()) {
+                $package->setSupported(true);
+                $package->setDependency(true);
+            }
         }
 
         return $this->cache[$cacheKey] = $package;
