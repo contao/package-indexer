@@ -58,7 +58,7 @@ class Factory
         $package->setLogo($this->metaData->getLogoForPackage($package));
         $this->addMeta($package);
 
-        if (!empty($package->getMeta()) && !$package->isSupported()) {
+        if (!$package->isSupported() && (!empty($package->getMeta()) || null !== $package->getLogo())) {
             $package->setSupported(true);
             $package->setDependency(true);
         }
