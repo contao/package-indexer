@@ -103,7 +103,7 @@ class Factory
         $package->setFavers((int) ($data['packages']['favers'] ?? 0));
         $package->setReleased($data['packages']['time'] ?? null);
         $package->setUpdated($latest['time'] ?? null);
-        $package->setSupported($this->isSupported($data['packages']['versions']));
+        $package->setSupported($this->isSupported($package->getName(), $data['packages']['versions']));
         $package->setAbandoned($data['packages']['abandoned'] ?? false);
         $package->setSuggest($latest['suggest'] ?? null);
         $package->setPrivate(false);
@@ -112,8 +112,14 @@ class Factory
         $this->addMeta($package);
     }
 
-    private function isSupported(array $versionsData): bool
+    private function isSupported(string $name, array $versionsData): bool
     {
+        $availablePackages = $this->metaData->getPackageNames();
+
+        if (\in_array($name, $availablePackages, true)) {
+            return true;
+        }
+
         foreach ($versionsData as $version => $versionData) {
             if ('contao-component' === $versionData['type']) {
                 return true;

@@ -31,6 +31,11 @@ class MetaDataRepository
     private $fs;
 
     /**
+     * @var array
+     */
+    private $names;
+
+    /**
      * Metadata constructor.
      */
     public function __construct(string $metaDataDir)
@@ -51,16 +56,18 @@ class MetaDataRepository
 
     public function getPackageNames(): array
     {
-        $names = [];
+        if (null === $this->names) {
+            $this->names = [];
 
-        $finder = new Finder();
-        $finder->directories()->in($this->getMetaDataDir())->depth('== 1');
+            $finder = new Finder();
+            $finder->directories()->in($this->getMetaDataDir())->depth('== 1');
 
-        foreach ($finder as $dir) {
-            $names[] = basename($dir->getPath()).'/'.$dir->getBasename();
+            foreach ($finder as $dir) {
+                $this->names[] = basename($dir->getPath()).'/'.$dir->getBasename();
+            }
         }
 
-        return $names;
+        return $this->names;
     }
 
     public function getLogoForPackage(Package $package): ?string
