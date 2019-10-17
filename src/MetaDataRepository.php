@@ -116,7 +116,7 @@ class MetaDataRepository
         return $data;
     }
 
-    public function getMetaDataForPackage(Package $package, string $language): array
+    public function getMetaDataForPackage(Package $package, string $language): ?array
     {
         $file = $this->getMetaDataDir().'/'.$package->getName().'/'.$language.'.yml';
 
@@ -132,7 +132,7 @@ class MetaDataRepository
             );
 
         } catch (ParseException $e) {
-            $data = [];
+            return null;
         }
 
         return $data;

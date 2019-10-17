@@ -58,6 +58,11 @@ class Factory
         $package->setLogo($this->metaData->getLogoForPackage($package));
         $this->addMeta($package);
 
+        if (!empty($package->getMeta()) && !$package->isSupported()) {
+            $package->setSupported(true);
+            $package->setDependency(true);
+        }
+
         return $this->cache[$cacheKey] = $package;
     }
 
@@ -103,23 +108,14 @@ class Factory
         $package->setFavers((int) ($data['packages']['favers'] ?? 0));
         $package->setReleased($data['packages']['time'] ?? null);
         $package->setUpdated($latest['time'] ?? null);
-        $package->setSupported($this->isSupported($package->getName(), $data['packages']['versions']));
+        $package->setSupported($this->isSupported($data['packages']['versions']));
         $package->setAbandoned($data['packages']['abandoned'] ?? false);
         $package->setSuggest($latest['suggest'] ?? null);
         $package->setPrivate(false);
-
-        $package->setLogo($this->metaData->getLogoForPackage($package));
-        $this->addMeta($package);
     }
 
-    private function isSupported(string $name, array $versionsData): bool
+    private function isSupported(array $versionsData): bool
     {
-        $availablePackages = $this->metaData->getPackageNames();
-
-        if (\in_array($name, $availablePackages, true)) {
-            return true;
-        }
-
         foreach ($versionsData as $version => $versionData) {
             if ('contao-component' === $versionData['type']) {
                 return true;
@@ -142,7 +138,9 @@ class Factory
         $meta = [];
 
         foreach (Indexer::LANGUAGES as $language) {
-            $meta[$language] = $this->metaData->getMetaDataForPackage($package, $language);
+            if (null !== ($data = $this->metaData->getMetaDataForPackage($package, $language))) {
+                $meta[$language] = $data;
+            }
         }
 
         $package->setMeta($meta);

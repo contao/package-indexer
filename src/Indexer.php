@@ -211,7 +211,7 @@ class Indexer
 
             /** @var Package $package */
             foreach ($chunk as $package) {
-                $languageKeys = array_unique(array_merge(['en'], array_keys(array_filter($package->getMeta()))));
+                $languageKeys = array_unique(array_merge(['en'], array_keys($package->getMeta())));
 
                 foreach ($languageKeys as $language) {
                     $languages = [$language];
