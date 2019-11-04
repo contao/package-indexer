@@ -121,7 +121,7 @@ class Factory
     private function isSupported(array $versionsData): bool
     {
         foreach ($versionsData as $version => $versionData) {
-            if (0 === strpos($version, 'dev-')) {
+            if (0 === strpos((string) $version, 'dev-')) {
                 continue;
             }
 
